@@ -9,31 +9,21 @@ use serde_json::Value;
 #[command(author, version, about, long_about = None)]
 struct Cli {
     /// Layout to analyse, in json format
-    layout: Option<PathBuf>,
+    layout: PathBuf,
     /// Corpus to use for analysis, in json format
-    corpus: Option<PathBuf>,
+    corpus: PathBuf,
 
 }
 
 fn main() {
     let cli = Cli::parse();
 
-    let layout = cli.layout.unwrap_or_else(|| {
-        eprintln!("Missing layout file");
-        process::exit(1);
-    });
-
-    let corpus = cli.corpus.unwrap_or_else(|| {
-        eprintln!("Missing corpus file");
-        process::exit(1);
-    });
-
-    let layout = File::open(layout).unwrap_or_else(|err| {
+    let layout = File::open(cli.layout).unwrap_or_else(|err| {
         eprintln!("Could not open layout file: {err}");
         process::exit(1);
     });
 
-    let corpus = File::open(corpus).unwrap_or_else(|err| {
+    let corpus = File::open(cli.corpus).unwrap_or_else(|err| {
         eprintln!("Could not open corpus file: {err}");
         process::exit(1);
     });

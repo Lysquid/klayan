@@ -19,7 +19,7 @@ fn sort_vec_by_key<K: PartialOrd, V>(vec: &mut Vec<(K, V)>) {
 }
 
 
-fn finger_frequency<'a>(layout: &HashMap<char, Key>, symbols: &Value) -> Vec<(Finger, f64)> {
+fn finger_frequency(layout: &HashMap<char, Key>, symbols: &Value) -> Vec<(Finger, f64)> {
 
     let mut finger_freq = HashMap::new();
     for (symbol, freq) in symbols.as_object().unwrap() {
