@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
-use layout::{Key, Finger};
-use serde_json::Value;
-mod layout;
-mod corups;
+use layout::{Keystrokes, Layout, Finger};
+use corpus::Corpus;
 
-fn normalize<K>(map: &mut HashMap<K, f64>) {
-    let total: f64 = map.values().sum();
+pub mod corpus;
+pub mod layout;
+
+fn normalize<K>(map: &mut HashMap<K, f32>) {
+    let total: f32 = map.values().sum();
     map.values_mut().for_each(|x| *x /= total);
 }
 
@@ -19,31 +20,32 @@ fn sort_vec_by_key<K: PartialOrd, V>(vec: &mut Vec<(K, V)>) {
 }
 
 
-fn finger_frequency(layout: &HashMap<char, Key>, symbols: &Value) -> Vec<(Finger, f64)> {
+fn calc_finger_freq(sym_to_keystrokes: &HashMap<char, Keystrokes>, sym_freq: &HashMap<char,f32>) -> Vec<(Finger, f32)> {
 
-    let mut finger_freq = HashMap::new();
-    for (symbol, freq) in symbols.as_object().unwrap() {
-        let symbol = symbol.as_str().chars().next().unwrap();
-        let freq = freq.as_f64().unwrap();
-        let finger = match layout.get(&symbol) {
-            Some(key) => key.finger.clone(),
+    let mut finger_freq: HashMap<Finger, f32> = HashMap::new();
+
+    for (symbol, freq) in sym_freq.iter() {
+
+        let keystrokes = match sym_to_keystrokes.get(symbol) {
+            Some(ks) => ks,
             None => {
-                continue;
-            },
+                continue
+            }
         };
-        finger_freq.entry(finger).and_modify(|f| *f += freq).or_insert(freq);
+        for keycode in keystrokes {
+            let finger = Finger::from(*keycode);
+            finger_freq.entry(finger).and_modify(|f| *f += freq).or_insert(*freq);
+        }
     }
-    
     normalize(&mut finger_freq);
     let mut finger_freq: Vec<(_, _)> = finger_freq.into_iter().collect();
     sort_vec_by_key(&mut finger_freq);
     finger_freq
 }
 
-pub fn analyse(layout: Value, corpus: Value) {
-    let layout = Key::build_map(layout);
-    // dbg!(&layout[&'D']);
-    let stats = finger_frequency(&layout, &corpus[&"symbols"]);
+pub fn analyse(layout: &Layout, corpus: &Corpus) {
+    let sym_to_keystrokes = layout::build_sym_to_keystrokes_map(layout);
+    let stats = calc_finger_freq(&sym_to_keystrokes, &corpus.symbols);
     dbg!(&stats);
 
 }

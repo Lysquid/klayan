@@ -2,7 +2,8 @@ use std::{path::PathBuf, process, fs::File, io::BufReader};
 
 use clap::Parser;
 use klayan::analyse;
-use serde_json::Value;
+use klayan::layout::Layout;
+use klayan::corpus::Corpus;
 
 /// Analyse a keyboard layout
 #[derive(Parser)]
@@ -28,15 +29,15 @@ fn main() {
         process::exit(1);
     });
 
-    let layout: Value = serde_json::from_reader(BufReader::new(layout)).unwrap_or_else(|err| {
-        eprint!("Layout file is not a valid json file: {err}");
+    let layout: Layout = serde_json::from_reader(BufReader::new(layout)).unwrap_or_else(|err| {
+        eprint!("Invalid layout file: {err}");
         process::exit(1);
     });
 
-    let corpus: Value = serde_json::from_reader(BufReader::new(corpus)).unwrap_or_else(|err| {
-        eprintln!("Corpus file is not a valid json file: {err}");
+    let corpus: Corpus = serde_json::from_reader(BufReader::new(corpus)).unwrap_or_else(|err| {
+        eprintln!("Invalid corpus file: {err}");
         process::exit(1);
     });
 
-    analyse(layout, corpus);
+    analyse(&layout, &corpus);
 }
