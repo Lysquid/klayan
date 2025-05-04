@@ -1,9 +1,9 @@
-use std::{path::PathBuf, process, fs::File, io::BufReader};
+use std::{fs::File, io::BufReader, path::PathBuf, process};
 
 use clap::Parser;
 use klayan::analyse;
-use klayan::layout::Layout;
 use klayan::corpus::Corpus;
+use klayan::layout::Layout;
 
 /// Analyse a keyboard layout
 #[derive(Parser)]
@@ -13,7 +13,6 @@ struct Cli {
     layout: PathBuf,
     /// Corpus to use for analysis, in json format
     corpus: PathBuf,
-
 }
 
 fn main() {

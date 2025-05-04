@@ -71,7 +71,6 @@ pub struct Layout {
     altgr: bool,
 }
 
-
 #[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum Finger {
     LeftPinky,
@@ -86,37 +85,30 @@ pub enum Finger {
 }
 
 impl Finger {
-    
     pub fn from(input: Keycode) -> Self {
         use Keycode::*;
         match input {
             Space => Self::Thumb,
             Digit1 | KeyQ | KeyA | KeyZ | IntlBackslash => Self::LeftPinky,
-            Digit2 | KeyW | KeyS | KeyX   => Self::LeftRing,
-            Digit3 | KeyE | KeyD | KeyC   => Self::LeftMiddle,
-            Digit4 | KeyR | KeyF | KeyV |
-            Digit5 | KeyT | KeyG | KeyB   => Self::LeftIndex,
-            Digit6 | KeyY | KeyH | KeyN |
-            Digit7 | KeyU | KeyJ | KeyM   => Self::RightIndex,
-            Digit8 | KeyI | KeyK | Comma  => Self::RightMiddle,
+            Digit2 | KeyW | KeyS | KeyX => Self::LeftRing,
+            Digit3 | KeyE | KeyD | KeyC => Self::LeftMiddle,
+            Digit4 | KeyR | KeyF | KeyV | Digit5 | KeyT | KeyG | KeyB => Self::LeftIndex,
+            Digit6 | KeyY | KeyH | KeyN | Digit7 | KeyU | KeyJ | KeyM => Self::RightIndex,
+            Digit8 | KeyI | KeyK | Comma => Self::RightMiddle,
             Digit9 | KeyO | KeyL | Period => Self::RightRing,
-            Digit0 | KeyP | Semicolon | Slash |
-            Minus | Equal | BracketLeft | BracketRight |
-            Quote | Backquote | Backslash => Self::RightPinky
+            Digit0 | KeyP | Semicolon | Slash | Minus | Equal | BracketLeft | BracketRight
+            | Quote | Backquote | Backslash => Self::RightPinky,
         }
     }
-    
 }
-
 
 pub type Keystrokes = Vec<Keycode>;
 
 pub fn build_sym_to_keystrokes_map(layout: &Layout) -> HashMap<char, Keystrokes> {
     let mut map: HashMap<char, Keystrokes> = HashMap::new();
-    
+
     // One key characters
     for (keycode, symbols) in layout.keymap.iter() {
-
         for symbol in symbols {
             // TODO: handle dead keys
             let symbol = symbol.chars().next().unwrap();

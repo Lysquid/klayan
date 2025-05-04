@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use layout::{Keystrokes, Layout, Finger};
 use corpus::Corpus;
+use layout::{Finger, Keystrokes, Layout};
 
 pub mod corpus;
 pub mod layout;
@@ -12,29 +12,30 @@ fn normalize<K>(map: &mut HashMap<K, f32>) {
 }
 
 fn sort_vec_by_value<K, V: PartialOrd>(vec: &mut Vec<(K, V)>) {
-    vec.sort_by(|(_, val1), (_, val2)| {val2.partial_cmp(val1).unwrap()});
+    vec.sort_by(|(_, val1), (_, val2)| val2.partial_cmp(val1).unwrap());
 }
 
 fn sort_vec_by_key<K: PartialOrd, V>(vec: &mut Vec<(K, V)>) {
-    vec.sort_by(|(key1, _), (key2, _)| {key1.partial_cmp(key2).unwrap()});
+    vec.sort_by(|(key1, _), (key2, _)| key1.partial_cmp(key2).unwrap());
 }
 
-
-fn calc_finger_freq(sym_to_keystrokes: &HashMap<char, Keystrokes>, sym_freq: &HashMap<char,f32>) -> Vec<(Finger, f32)> {
-
+fn calc_finger_freq(
+    sym_to_keystrokes: &HashMap<char, Keystrokes>,
+    sym_freq: &HashMap<char, f32>,
+) -> Vec<(Finger, f32)> {
     let mut finger_freq: HashMap<Finger, f32> = HashMap::new();
 
     for (symbol, freq) in sym_freq.iter() {
-
         let keystrokes = match sym_to_keystrokes.get(symbol) {
             Some(ks) => ks,
-            None => {
-                continue
-            }
+            None => continue,
         };
         for keycode in keystrokes {
             let finger = Finger::from(*keycode);
-            finger_freq.entry(finger).and_modify(|f| *f += freq).or_insert(*freq);
+            finger_freq
+                .entry(finger)
+                .and_modify(|f| *f += freq)
+                .or_insert(*freq);
         }
     }
     normalize(&mut finger_freq);
@@ -47,5 +48,4 @@ pub fn analyse(layout: &Layout, corpus: &Corpus) {
     let sym_to_keystrokes = layout::build_sym_to_keystrokes_map(layout);
     let stats = calc_finger_freq(&sym_to_keystrokes, &corpus.symbols);
     dbg!(&stats);
-
 }
