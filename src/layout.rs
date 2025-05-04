@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use serde::Deserializer;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Deserialize)]
 pub enum Keycode {
     KeyQ,
@@ -61,12 +63,89 @@ pub enum Geometry {
     Compact,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum Symbol {
+    Symbol(char),
+    DeadKey(char),
+    None,
+}
+
+impl<'de> serde::Deserialize<'de> for Symbol {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(d)?;
+        let mut iter = s.chars();
+        let first_char = match iter.next() {
+            Some(c) => c,
+            None => return Ok(Symbol::None),
+        };
+        let second_char = iter.next();
+        if let Some(_) = iter.next() {
+            return Err(serde::de::Error::custom(
+                "Unexpected extra characters in input",
+            ));
+        }
+
+        match second_char {
+            Some(c) => {
+                if first_char == '*' {
+                    Ok(Symbol::DeadKey(c))
+                } else {
+                    Err(serde::de::Error::custom(
+                        "Unexpected extra character in input",
+                    ))
+                }
+            }
+            None => Ok(Symbol::Symbol(first_char)),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deserialize_symbol_single_character() {
+        let json = r#""a""#;
+        let symbol: Symbol = serde_json::from_str(json).unwrap();
+        assert_eq!(symbol, Symbol::Symbol('a'));
+    }
+
+    #[test]
+    fn deserialize_symbol_dead_key() {
+        let json = r#""**""#;
+        let symbol: Symbol = serde_json::from_str(json).unwrap();
+        assert_eq!(symbol, Symbol::DeadKey('*'));
+    }
+
+    #[test]
+    fn deserialize_symbol_none() {
+        let json = r#""""#;
+        let symbol: Symbol = serde_json::from_str(json).unwrap();
+        assert_eq!(symbol, Symbol::None);
+    }
+
+    #[test]
+    fn deserialize_symbol_invalid_extra_characters() {
+        let json = r#""*ab""#;
+        let result: Result<Symbol, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn deserialize_symbol_invalid_dead_key_format() {
+        let json = r#""ab""#;
+        let result: Result<Symbol, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+    }
+}
+
 #[derive(Debug, serde::Deserialize)]
 pub struct Layout {
     name: String,
     description: String,
     geometry: Geometry,
-    keymap: HashMap<Keycode, Vec<String>>,
+    keymap: HashMap<Keycode, Vec<Symbol>>,
     deadkeys: HashMap<String, HashMap<String, String>>,
     altgr: bool,
 }
@@ -110,12 +189,13 @@ pub fn build_sym_to_keystrokes_map(layout: &Layout) -> HashMap<char, Keystrokes>
     // One key characters
     for (keycode, symbols) in layout.keymap.iter() {
         for symbol in symbols {
-            // TODO: handle dead keys
-            let symbol = symbol.chars().next().unwrap();
-            if let Some(keystrokes) = map.get_mut(&symbol) {
-                // TODO: edge case, if multiple keep the shortest
-            } else {
-                map.insert(symbol, vec![*keycode]);
+            match symbol {
+                Symbol::Symbol(c) => {
+                    map.insert(*c, vec![*keycode]);
+                }
+                // TODO: handle dead keys
+                Symbol::DeadKey(c) => continue,
+                Symbol::None => continue,
             }
         }
     }
