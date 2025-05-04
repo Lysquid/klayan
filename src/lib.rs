@@ -5,6 +5,7 @@ use layout::{Finger, Keystrokes, Layout};
 
 pub mod corpus;
 pub mod layout;
+pub mod symbols;
 
 fn normalize<K>(map: &mut HashMap<K, f32>) {
     let total: f32 = map.values().sum();
