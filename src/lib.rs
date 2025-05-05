@@ -12,9 +12,9 @@ fn normalize<K>(map: &mut HashMap<K, f32>) {
     map.values_mut().for_each(|x| *x /= total);
 }
 
-fn sort_vec_by_value<K, V: PartialOrd>(vec: &mut Vec<(K, V)>) {
-    vec.sort_by(|(_, val1), (_, val2)| val2.partial_cmp(val1).unwrap());
-}
+// fn sort_vec_by_value<K, V: PartialOrd>(vec: &mut Vec<(K, V)>) {
+//     vec.sort_by(|(_, val1), (_, val2)| val2.partial_cmp(val1).unwrap());
+// }
 
 fn sort_vec_by_key<K: PartialOrd, V>(vec: &mut Vec<(K, V)>) {
     vec.sort_by(|(key1, _), (key2, _)| key1.partial_cmp(key2).unwrap());
@@ -46,7 +46,7 @@ fn calc_finger_freq(
 }
 
 pub fn analyse(layout: &Layout, corpus: &Corpus) {
-    let sym_to_keystrokes = layout::build_sym_to_keystrokes_map(layout);
+    let sym_to_keystrokes = layout::build_keystrokes_map(layout);
     let stats = calc_finger_freq(&sym_to_keystrokes, &corpus.symbols);
     dbg!(&stats);
 }

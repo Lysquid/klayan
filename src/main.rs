@@ -1,6 +1,7 @@
 use std::{fs::File, io::BufReader, path::PathBuf, process};
 
 use clap::Parser;
+use env_logger;
 use klayan::analyse;
 use klayan::corpus::Corpus;
 use klayan::layout::Layout;
@@ -16,6 +17,14 @@ struct Cli {
 }
 
 fn main() {
+    let mut log_builder = env_logger::Builder::new();
+    if cfg!(debug_assertions) {
+        log_builder.filter(None, log::LevelFilter::Debug);
+    } else {
+        log_builder.filter(None, log::LevelFilter::Warn);
+    }
+    log_builder.init();
+
     let cli = Cli::parse();
 
     let layout = File::open(cli.layout).unwrap_or_else(|err| {
