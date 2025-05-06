@@ -213,7 +213,7 @@ fn build_keystrokes_map_internal(
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use std::collections::HashMap;
 
     use super::PhysicalKey::*;
