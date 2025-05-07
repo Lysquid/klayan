@@ -14,9 +14,9 @@ pub enum Finger {
 }
 
 impl Finger {
-    pub fn from(input: PhysicalKey) -> Self {
+    pub fn from(key: PhysicalKey) -> Self {
         use PhysicalKey::*;
-        match input {
+        match key {
             Space => Self::Thumb,
             Digit1 | KeyQ | KeyA | KeyZ | IntlBackslash => Self::LeftPinky,
             Digit2 | KeyW | KeyS | KeyX => Self::LeftRing,
