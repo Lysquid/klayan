@@ -1,11 +1,13 @@
+pub mod hands;
+pub mod kalamine;
+pub mod keystrokes;
+
 use std::collections::HashMap;
 
-use corpus::Corpus;
-use layout::{Finger, Keystrokes, Layout};
+use keystrokes::Keystrokes;
 
-pub mod corpus;
-pub mod layout;
-pub mod symbols;
+use crate::hands::Finger;
+use crate::kalamine::{Corpus, Layout};
 
 fn normalize<K>(map: &mut HashMap<K, f32>) {
     let total: f32 = map.values().sum();
@@ -46,7 +48,7 @@ fn calc_finger_freq(
 }
 
 pub fn analyse(layout: &Layout, corpus: &Corpus) {
-    let sym_to_keystrokes = layout::build_keystrokes_map(layout);
+    let sym_to_keystrokes = keystrokes::build_keystrokes_map(layout);
     let stats = calc_finger_freq(&sym_to_keystrokes, &corpus.symbols);
     dbg!(&stats);
 }

@@ -3,8 +3,7 @@ use std::{fs::File, io::BufReader, path::PathBuf, process};
 use clap::Parser;
 use env_logger;
 use klayan::analyse;
-use klayan::corpus::Corpus;
-use klayan::layout::Layout;
+use klayan::kalamine::{Corpus, Layout};
 
 /// Analyse a keyboard layout
 #[derive(Parser)]

@@ -108,7 +108,7 @@ mod tests {
             path: String::new(),
             symbols: HashMap::new(),
             digrams: HashMap::new(),
-            trigrams: HashMap::new()
+            trigrams: HashMap::new(),
         };
         assert_eq!(corpus, expected);
     }

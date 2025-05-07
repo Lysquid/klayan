@@ -1,108 +1,7 @@
-use crate::symbols::{DeadKey, ModMapping, Symbol};
 use log::warn;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Deserialize)]
-pub enum PhysicalKey {
-    KeyQ,
-    KeyW,
-    KeyE,
-    KeyR,
-    KeyT,
-    KeyY,
-    KeyU,
-    KeyI,
-    KeyO,
-    KeyP,
-    KeyA,
-    KeyS,
-    KeyD,
-    KeyF,
-    KeyG,
-    KeyH,
-    KeyJ,
-    KeyK,
-    KeyL,
-    Semicolon,
-    KeyZ,
-    KeyX,
-    KeyC,
-    KeyV,
-    KeyB,
-    KeyN,
-    KeyM,
-    Comma,
-    Period,
-    Slash,
-    Space,
-    Digit1,
-    Digit2,
-    Digit3,
-    Digit4,
-    Digit5,
-    Digit6,
-    Digit7,
-    Digit8,
-    Digit9,
-    Digit0,
-    Minus,
-    Equal,
-    BracketLeft,
-    BracketRight,
-    Quote,
-    Backquote,
-    Backslash,
-    IntlBackslash,
-}
-
-#[derive(Debug, serde::Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Geometry {
-    Ergo,
-    ISO,
-    Compact,
-}
-
-#[derive(Debug, serde::Deserialize)]
-pub struct Layout {
-    // name: String,
-    // description: String,
-    // geometry: Geometry,
-    keymap: HashMap<PhysicalKey, ModMapping>,
-    deadkeys: HashMap<DeadKey, HashMap<Symbol, Symbol>>,
-    // altgr: bool,
-}
-
-#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash)]
-pub enum Finger {
-    LeftPinky,
-    LeftRing,
-    LeftMiddle,
-    LeftIndex,
-    Thumb,
-    RightIndex,
-    RightMiddle,
-    RightRing,
-    RightPinky,
-}
-
-impl Finger {
-    pub fn from(input: PhysicalKey) -> Self {
-        use PhysicalKey::*;
-        match input {
-            Space => Self::Thumb,
-            Digit1 | KeyQ | KeyA | KeyZ | IntlBackslash => Self::LeftPinky,
-            Digit2 | KeyW | KeyS | KeyX => Self::LeftRing,
-            Digit3 | KeyE | KeyD | KeyC => Self::LeftMiddle,
-            Digit4 | KeyR | KeyF | KeyV | Digit5 | KeyT | KeyG | KeyB => Self::LeftIndex,
-            Digit6 | KeyY | KeyH | KeyN | Digit7 | KeyU | KeyJ | KeyM => Self::RightIndex,
-            Digit8 | KeyI | KeyK | Comma => Self::RightMiddle,
-            Digit9 | KeyO | KeyL | Period => Self::RightRing,
-            Digit0 | KeyP | Semicolon | Slash | Minus | Equal | BracketLeft | BracketRight
-            | Quote | Backquote | Backslash => Self::RightPinky,
-        }
-    }
-}
+use crate::kalamine::{DeadKey, Layout, ModMapping, PhysicalKey, Symbol};
 
 pub type Keystrokes = Vec<PhysicalKey>;
 
@@ -129,6 +28,9 @@ fn build_keystrokes_map_internal(
     //   (exposed as another lib)
     // When to do this refactor: maybe after writing a few analysis functions,
     // to see if it would be annoying to keep the mod information in the new layout struct
+    //
+    // EDIT: actually YAGNI
+    // If I need in the end, it's better to do it later so I don't refactor it multiple times
 
     let mut base_map: HashMap<char, PhysicalKey> = HashMap::new();
     let mut deadkeys_map: HashMap<DeadKey, Keystrokes> = HashMap::new();
@@ -216,9 +118,9 @@ fn build_keystrokes_map_internal(
 mod tests {
     use std::collections::HashMap;
 
-    use super::PhysicalKey::*;
-    use super::Symbol::Character;
     use super::*;
+    use PhysicalKey::*;
+    use Symbol::Character;
 
     #[test]
     fn build_keystrokes_map() {
