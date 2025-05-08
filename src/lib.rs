@@ -4,7 +4,6 @@ pub mod keystrokes;
 
 use std::collections::HashMap;
 
-use kalamine::PhysicalKey;
 use keystrokes::Keystrokes;
 
 use crate::hands::Finger;

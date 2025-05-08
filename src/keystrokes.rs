@@ -31,6 +31,13 @@ fn build_keystrokes_map_internal(
     //
     // EDIT: actually YAGNI
     // If I need in the end, it's better to do it later so I don't refactor it multiple times
+    //
+    // EDIT2: Actually unit testing is a very compelling argument.
+    // Right now it's too bothersome to setup so I just have one massive test
+    // And splitting the concern of what to test would be nice
+    // Plus my custom layout struct would have the Mods encoded,
+    // so I could pick the keystrokes with least keys without making this function
+    // even more complicated
 
     let mut base_map: HashMap<char, PhysicalKey> = HashMap::new();
     let mut deadkeys_map: HashMap<DeadKey, Keystrokes> = HashMap::new();
@@ -47,7 +54,7 @@ fn build_keystrokes_map_internal(
                 match symbol {
                     Symbol::Character(c) => {
                         base_map.insert(c, *physical_key);
-                        // TODO: handle duplicates (take the shortest)
+                        // TODO: handle duplicates (take the one with least mods)
                     }
                     Symbol::DeadKey(c) => {
                         deadkeys_map.insert(DeadKey { name: c }, vec![*physical_key]);
@@ -99,7 +106,9 @@ fn build_keystrokes_map_internal(
 
             match symbol {
                 Symbol::Character(c) => {
-                    map.insert(*c, ks);
+                    if is_better_keystrokes(&ks, map.get(c)) {
+                        map.insert(*c, ks);
+                    }
                 }
                 Symbol::DeadKey(c) => {
                     let dk = DeadKey { name: *c };
@@ -114,6 +123,21 @@ fn build_keystrokes_map_internal(
     return map;
 }
 
+fn is_better_keystrokes(ks: &Keystrokes, old_ks: Option<&Keystrokes>) -> bool {
+    match old_ks {
+        None => true,
+        Some(old_ks) => {
+            if ks.len() == old_ks.len() {
+                ks.iter().filter(|&&x| x == PhysicalKey::Space).count()
+                > old_ks.iter().filter(|&&x| x == PhysicalKey::Space).count()
+            } else {
+                ks.len() < old_ks.len()
+            }
+        }
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
@@ -127,6 +151,9 @@ mod tests {
         let keymap = HashMap::from([
             (KeyA, ModMapping::from(vec!["a", "A", "(", ")"])),
             (KeyG, ModMapping::from(vec!["g"])),
+            (Space, ModMapping::from(vec![" "])),
+            (Quote, ModMapping::from(vec!["'"])),
+            (Period, ModMapping::from(vec!["."])),
             (Minus, ModMapping::from(vec!["*^", "-"])),
         ]);
         let deadkeys = HashMap::from([
@@ -137,7 +164,12 @@ mod tests {
                     (Character('A'), Character('Â')),
                     (Character('('), Character('{')),
                     (Character(')'), Character('}')),
+                    (Character('i'), Character('ï')),
+                    (Character('.'), Character('.')),
+                    (Character('\''), Character('’')),
+                    (Character(' '), Character('’')),
                     (Character('g'), Symbol::DeadKey('µ')),
+                    (Symbol::DeadKey('^'), Symbol::DeadKey('¨')),
                 ]),
             ),
             (
@@ -145,6 +177,13 @@ mod tests {
                 HashMap::from([
                     (Character('a'), Character('α')),
                     (Character('g'), Character('γ')),
+                ]),
+            ),
+            (
+                DeadKey { name: '¨' },
+                HashMap::from([
+                    (Character('a'), Character('ä')),
+                    (Character('.'), Character('.')),
                 ]),
             ),
         ]);
@@ -155,14 +194,24 @@ mod tests {
             ('(', vec![KeyA]),
             (')', vec![KeyA]),
             ('g', vec![KeyG]),
+            (' ', vec![Space]),
+            ('\'',vec![Quote]),
+            ('.', vec![Period]),
             ('-', vec![Minus]),
             ('â', vec![Minus, KeyA]),
             ('Â', vec![Minus, KeyA]),
             ('{', vec![Minus, KeyA]),
             ('}', vec![Minus, KeyA]),
+            ('’', vec![Minus, Space]),
+            ('ä', vec![Minus, Minus, KeyA]),
             ('α', vec![Minus, KeyG, KeyA]),
             ('γ', vec![Minus, KeyG, KeyG]),
         ]);
+        for (sym, ks) in expected.iter() {
+            // Simplify debug with one to one comparison
+            assert!(keystrokes_map.contains_key(sym), "keystrokes_map does not contain symbol: {}", sym);
+            assert_eq!(keystrokes_map.get(sym).unwrap(), ks, "symbol: {}", sym);
+        }
         assert_eq!(keystrokes_map, expected);
     }
 }
