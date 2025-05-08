@@ -129,14 +129,13 @@ fn is_better_keystrokes(ks: &Keystrokes, old_ks: Option<&Keystrokes>) -> bool {
         Some(old_ks) => {
             if ks.len() == old_ks.len() {
                 ks.iter().filter(|&&x| x == PhysicalKey::Space).count()
-                > old_ks.iter().filter(|&&x| x == PhysicalKey::Space).count()
+                    > old_ks.iter().filter(|&&x| x == PhysicalKey::Space).count()
             } else {
                 ks.len() < old_ks.len()
             }
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -195,7 +194,7 @@ mod tests {
             (')', vec![KeyA]),
             ('g', vec![KeyG]),
             (' ', vec![Space]),
-            ('\'',vec![Quote]),
+            ('\'', vec![Quote]),
             ('.', vec![Period]),
             ('-', vec![Minus]),
             ('â', vec![Minus, KeyA]),
@@ -209,7 +208,11 @@ mod tests {
         ]);
         for (sym, ks) in expected.iter() {
             // Simplify debug with one to one comparison
-            assert!(keystrokes_map.contains_key(sym), "keystrokes_map does not contain symbol: {}", sym);
+            assert!(
+                keystrokes_map.contains_key(sym),
+                "keystrokes_map does not contain symbol: {}",
+                sym
+            );
             assert_eq!(keystrokes_map.get(sym).unwrap(), ks, "symbol: {}", sym);
         }
         assert_eq!(keystrokes_map, expected);

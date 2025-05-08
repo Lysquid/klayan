@@ -2,8 +2,8 @@ use std::{fs::File, io::BufReader, path::PathBuf, process};
 
 use clap::Parser;
 use env_logger;
-use klayan::analyse;
-use klayan::kalamine::{Corpus, Layout};
+use klayan;
+use klayan::kalamine;
 
 /// Analyse a keyboard layout
 #[derive(Parser)]
@@ -36,15 +36,17 @@ fn main() {
         process::exit(1);
     });
 
-    let layout: Layout = serde_json::from_reader(BufReader::new(layout)).unwrap_or_else(|err| {
-        eprint!("Invalid layout file: {err}");
-        process::exit(1);
-    });
+    let layout: kalamine::Layout =
+        serde_json::from_reader(BufReader::new(layout)).unwrap_or_else(|err| {
+            eprint!("Invalid layout file: {err}");
+            process::exit(1);
+        });
 
-    let corpus: Corpus = serde_json::from_reader(BufReader::new(corpus)).unwrap_or_else(|err| {
-        eprintln!("Invalid corpus file: {err}");
-        process::exit(1);
-    });
+    let corpus: kalamine::Corpus =
+        serde_json::from_reader(BufReader::new(corpus)).unwrap_or_else(|err| {
+            eprintln!("Invalid corpus file: {err}");
+            process::exit(1);
+        });
 
-    analyse(&layout, &corpus);
+    klayan::analyse(&layout, &corpus);
 }
