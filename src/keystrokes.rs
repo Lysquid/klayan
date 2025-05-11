@@ -61,6 +61,8 @@ fn build_keystrokes_map_internal(
                     }
                 }
             }
+            // TODO: warn if incompatible key is used, such as IntlBackslash with ANSI
+            // and don't add it to the map
         }
     }
 

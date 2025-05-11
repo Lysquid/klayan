@@ -1,3 +1,4 @@
+pub mod geometry;
 pub mod hands;
 pub mod kalamine;
 pub mod keystrokes;

@@ -3,7 +3,8 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 
-use crate::hands::{Finger, Hand, Row};
+use crate::geometry::{Geometry, Row, U};
+use crate::hands::{Finger, Hand};
 use crate::kalamine::PhysicalKey;
 use crate::keystrokes::Keystrokes;
 
@@ -20,13 +21,25 @@ pub fn add_freq<K>(entry: Entry<'_, K, f32>, freq: f32) {
     entry.and_modify(|f| *f += freq).or_insert(freq);
 }
 
-fn is_lsb(finger1: Finger, finger2: Finger) -> bool {
-    use Finger::*;
-    // TODO: do a less simplistic implementation with columns once I have the info of the geometry
-    match (finger1, finger2) {
-        (LeftMiddle, LeftIndex) | (LeftIndex, LeftMiddle) => true,
-        (RightMiddle, RightIndex) | (RightIndex, RightMiddle) => true,
-        (_, _) => false,
+/// Using keyboard layout doc definition
+/// https://docs.google.com/document/d/1W0jhfqJI2ueJ2FNseR4YAFpNfsUM-_FlREHbpNGmC2o/edit?tab=t.i8oe0bwffr95
+/// with addition of index / pinky case
+fn is_lsb(key1: PhysicalKey, key2: PhysicalKey, geometry: Geometry) -> bool {
+    let finger1 = Finger::from(key1);
+    let finger2 = Finger::from(key2);
+    let finger_dist = match finger1.distance(&finger2) {
+        Some(dist) => dist,
+        None => return false,
+    };
+    let horizontal_dist = match geometry.lateral_distance(key1, key2) {
+        Some(dist) => dist,
+        None => return false,
+    };
+    match finger_dist {
+        1 => horizontal_dist >= 2 * U,         // adjacent fingers (2U)
+        2 => horizontal_dist >= 3 * U + U / 2, // semi-adjacent fingers (3.5U)
+        3 => horizontal_dist >= 5 * U,         // index & pinky (5U)
+        _ => false,
     }
 }
 
@@ -34,14 +47,15 @@ fn is_scissors(key1: PhysicalKey, key2: PhysicalKey) -> bool {
     let row1 = Row::from(key1);
     let row2 = Row::from(key2);
     match (Hand::from(key1), Hand::from(key2)) {
-        (Hand::Thumbs, _) | (_, Hand::Thumbs)=> false,
-        (hand1, hand2) => hand1 != hand2 && row1.as_u32().abs_diff(row2.as_u32()) >= 2,
+        (Hand::Thumbs, _) | (_, Hand::Thumbs) => false,
+        (hand1, hand2) => hand1 != hand2 && row1.distance(&row2) >= 2,
     }
 }
 
 pub fn calc_bigrams(
     sym_to_keystrokes: &HashMap<char, Keystrokes>,
     bigrams_freq: &HashMap<[char; 2], f32>,
+    geometry: Geometry,
 ) -> (HashMap<[char; 2], f32>, HashMap<[char; 2], f32>) {
     let mut sfb: HashMap<[char; 2], f32> = HashMap::new();
     let mut sku: HashMap<[char; 2], f32> = HashMap::new();
@@ -64,7 +78,7 @@ pub fn calc_bigrams(
             } else if finger1 == finger2 {
                 add_freq(sfb.entry(bigram), freq);
                 add_freq(per_finger_sfb.entry(finger1), freq);
-            } else if is_lsb(finger1, finger2) {
+            } else if is_lsb(key1, key2, geometry) {
                 add_freq(lsb.entry(bigram), freq);
             }
             if is_scissors(key1, key2) {
@@ -105,7 +119,7 @@ mod tests {
         let mut bigrams_freq = other_bigrams.clone();
         bigrams_freq.extend(expected_sfb.iter());
         bigrams_freq.extend(expected_sku.iter());
-        let (sfb, sku) = calc_bigrams(&sym_to_ks, &bigrams_freq);
+        let (sfb, sku) = calc_bigrams(&sym_to_ks, &bigrams_freq, Geometry::ISO);
         assert_eq!(sfb, expected_sfb);
         assert_eq!(sku, expected_sku);
     }
@@ -131,7 +145,7 @@ mod tests {
         let mut bigrams_freq = other_bigrams.clone();
         bigrams_freq.extend(expected_sfb.clone());
         bigrams_freq.extend(expected_sku.clone());
-        let (sfb, sku) = calc_bigrams(&sym_to_ks, &bigrams_freq);
+        let (sfb, sku) = calc_bigrams(&sym_to_ks, &bigrams_freq, Geometry::ISO);
         assert_eq!(sfb, expected_sfb);
         assert_eq!(sku, expected_sku);
     }
@@ -153,7 +167,7 @@ mod tests {
         ]);
         let mut bigrams_freq = other_bigrams.clone();
         bigrams_freq.extend(expected_sku.clone());
-        let (_, sku) = calc_bigrams(&sym_to_ks, &bigrams_freq);
+        let (_, sku) = calc_bigrams(&sym_to_ks, &bigrams_freq, Geometry::ISO);
         *expected_sku.get_mut(&['ë', 'e']).unwrap() = 2.0; // ' ' e e => 2 sku
         *expected_sku.get_mut(&['ë', 'ë']).unwrap() = 2.0; // ' ' e ' ' e => 2 sku
         assert_eq!(sku, expected_sku);

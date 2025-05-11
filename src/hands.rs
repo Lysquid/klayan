@@ -2,19 +2,20 @@ use crate::kalamine::PhysicalKey;
 
 #[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum Finger {
-    LeftPinky,
-    LeftRing,
-    LeftMiddle,
-    LeftIndex,
-    Thumb,
-    RightIndex,
-    RightMiddle,
-    RightRing,
-    RightPinky,
+    Thumb = 0,
+    LeftPinky = 1,
+    LeftRing = 2,
+    LeftMiddle = 3,
+    LeftIndex = 4,
+    RightIndex = 5,
+    RightMiddle = 6,
+    RightRing = 7,
+    RightPinky = 8,
 }
 
 impl Finger {
     pub fn from(key: PhysicalKey) -> Self {
+        // TODO: depend on geometry (opti) / angle mod
         use PhysicalKey::*;
         match key {
             Space => Self::Thumb,
@@ -28,6 +29,16 @@ impl Finger {
             Digit0 | KeyP | Semicolon | Slash | Minus | Equal | BracketLeft | BracketRight
             | Quote | Backquote | Backslash => Self::RightPinky,
         }
+    }
+
+    pub fn distance(&self, other: &Self) -> Option<u32> {
+        if Hand::from_finger(*self) != Hand::from_finger(*other)
+            || *self == Self::Thumb
+            || *other == Self::Thumb
+        {
+            return None;
+        }
+        return Some((*self as u32).abs_diff(*other as u32));
     }
 }
 
@@ -50,36 +61,5 @@ impl Hand {
 
     pub fn from(key: PhysicalKey) -> Self {
         Self::from_finger(Finger::from(key))
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash)]
-pub enum Row {
-    Spacebar = 0,
-    Lower = 1,
-    Middle = 2,
-    Upper = 3,
-    Digits = 4,
-}
-
-impl Row {
-    pub fn from(key: PhysicalKey) -> Self {
-        use PhysicalKey::*;
-        match key {
-            Backquote | Digit1 | Digit2 | Digit3 | Digit4 | Digit5 | Digit6 | Digit7 | Digit8
-            | Digit9 | Digit0 | Minus | Equal => Self::Digits,
-            KeyQ | KeyW | KeyE | KeyR | KeyT | KeyY | KeyU | KeyI | KeyO | KeyP | BracketLeft
-            | BracketRight | Backslash => Self::Upper,
-            KeyA | KeyS | KeyD | KeyF | KeyG | KeyH | KeyJ | KeyK | KeyL | Semicolon | Quote => {
-                Self::Middle
-            }
-            IntlBackslash | KeyZ | KeyX | KeyC | KeyV | KeyB | KeyN | KeyM | Comma | Period
-            | Slash => Self::Lower,
-            Space => Self::Spacebar,
-        }
-    }
-
-    pub fn as_u32(&self) -> u32 {
-        *self as u32
     }
 }

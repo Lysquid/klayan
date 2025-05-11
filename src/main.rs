@@ -2,8 +2,8 @@ use std::{fs::File, io::BufReader, path::PathBuf, process};
 
 use clap::Parser;
 use env_logger;
-use klayan;
 use klayan::kalamine;
+use klayan::{self, geometry};
 
 /// Analyse a keyboard layout
 #[derive(Parser)]
@@ -13,6 +13,8 @@ struct Cli {
     layout: PathBuf,
     /// Corpus to use for analysis, in json format
     corpus: PathBuf,
+    /// Keyboard geometry
+    geometry: Option<klayan::geometry::Geometry>,
 }
 
 fn main() {
@@ -48,5 +50,7 @@ fn main() {
             process::exit(1);
         });
 
-    klayan::analyse(&layout, &corpus);
+    let geometry = cli.geometry.unwrap_or(geometry::Geometry::ISO);
+
+    klayan::analyse(&layout, &corpus, geometry);
 }
