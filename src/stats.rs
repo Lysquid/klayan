@@ -11,9 +11,10 @@ pub fn analyse(layout: &Layout, corpus: &Corpus) {
     let stats = symbols::calc_finger_freq(&sym_to_keystrokes, &corpus.symbols);
     dbg!(&stats);
 
-    let sfb = bigrams::calc_sfb(&sym_to_keystrokes, &corpus.digrams);
+    let (sfb, sku) = bigrams::calc_bigrams(&sym_to_keystrokes, &corpus.digrams);
     let mut sfb = utils::map_to_vec(sfb);
     utils::sort_vec_by_value(&mut sfb);
     sfb.reverse();
     dbg!(&sfb);
+    dbg!(&sku);
 }
