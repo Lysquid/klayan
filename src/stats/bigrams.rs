@@ -1,8 +1,19 @@
 use std::collections::HashMap;
 
+use itertools::Itertools;
+
 use crate::hands::Finger;
 use crate::kalamine::PhysicalKey;
 use crate::keystrokes::Keystrokes;
+
+fn bigram_two_keys_iter(
+    sym_to_keystrokes: &HashMap<char, Keystrokes>,
+    bigram: [char; 2],
+) -> Option<impl Iterator<Item = (&PhysicalKey, &PhysicalKey)>> {
+    let ks1 = sym_to_keystrokes.get(&bigram[0])?;
+    let ks2 = sym_to_keystrokes.get(&bigram[1])?;
+    Some(ks1.iter().chain(ks2.iter()).tuple_windows())
+}
 
 pub fn calc_bigrams(
     sym_to_keystrokes: &HashMap<char, Keystrokes>,
@@ -12,26 +23,17 @@ pub fn calc_bigrams(
     let mut sku: HashMap<[char; 2], f32> = HashMap::new();
 
     for (&bigram, &freq) in bigrams_freq {
-
-        let ks1 = match sym_to_keystrokes.get(&bigram[0]) {
-            Some(ks) => ks,
-            None => continue,
-        };
-        let ks2 = match sym_to_keystrokes.get(&bigram[1]) {
-            Some(ks) => ks,
+        let iter = match bigram_two_keys_iter(sym_to_keystrokes, bigram) {
+            Some(iter) => iter,
             None => continue,
         };
 
-        let mut prev_key: Option<PhysicalKey> = None;
-        for &key in ks1.iter().chain(ks2.iter()) {
-            if let Some(prev_key) = prev_key {
-                if key == prev_key {
-                    sku.entry(bigram).and_modify(|f| *f += freq).or_insert(freq);
-                } else if Finger::from(key) == Finger::from(prev_key) {
-                    sfb.entry(bigram).and_modify(|f| *f += freq).or_insert(freq);
-                }
+        for (&key1, &key2) in iter {
+            if key1 == key2 {
+                sku.entry(bigram).and_modify(|f| *f += freq).or_insert(freq);
+            } else if Finger::from(key1) == Finger::from(key2) {
+                sfb.entry(bigram).and_modify(|f| *f += freq).or_insert(freq);
             }
-            prev_key = Some(key);
         }
     }
     (sfb, sku)
