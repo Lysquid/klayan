@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 
-use crate::hands::Finger;
+use crate::hands::{Finger, Hand, Row};
 use crate::kalamine::PhysicalKey;
 use crate::keystrokes::Keystrokes;
 
@@ -20,12 +20,33 @@ pub fn add_freq<K>(entry: Entry<'_, K, f32>, freq: f32) {
     entry.and_modify(|f| *f += freq).or_insert(freq);
 }
 
+fn is_lsb(finger1: Finger, finger2: Finger) -> bool {
+    use Finger::*;
+    // TODO: do a less simplistic implementation with columns once I have the info of the geometry
+    match (finger1, finger2) {
+        (LeftMiddle, LeftIndex) | (LeftIndex, LeftMiddle) => true,
+        (RightMiddle, RightIndex) | (RightIndex, RightMiddle) => true,
+        (_, _) => false,
+    }
+}
+
+fn is_scissors(key1: PhysicalKey, key2: PhysicalKey) -> bool {
+    let row1 = Row::from(key1);
+    let row2 = Row::from(key2);
+    match (Hand::from(key1), Hand::from(key2)) {
+        (Hand::Thumbs, _) | (_, Hand::Thumbs)=> false,
+        (hand1, hand2) => hand1 != hand2 && row1.as_u32().abs_diff(row2.as_u32()) >= 2,
+    }
+}
+
 pub fn calc_bigrams(
     sym_to_keystrokes: &HashMap<char, Keystrokes>,
     bigrams_freq: &HashMap<[char; 2], f32>,
 ) -> (HashMap<[char; 2], f32>, HashMap<[char; 2], f32>) {
     let mut sfb: HashMap<[char; 2], f32> = HashMap::new();
     let mut sku: HashMap<[char; 2], f32> = HashMap::new();
+    let mut lsb: HashMap<[char; 2], f32> = HashMap::new();
+    let mut scissors: HashMap<[char; 2], f32> = HashMap::new();
     let mut per_finger_sfb: HashMap<Finger, f32> = HashMap::new();
     let mut per_finger_sku: HashMap<Finger, f32> = HashMap::new();
 
@@ -43,6 +64,11 @@ pub fn calc_bigrams(
             } else if finger1 == finger2 {
                 add_freq(sfb.entry(bigram), freq);
                 add_freq(per_finger_sfb.entry(finger1), freq);
+            } else if is_lsb(finger1, finger2) {
+                add_freq(lsb.entry(bigram), freq);
+            }
+            if is_scissors(key1, key2) {
+                add_freq(scissors.entry(bigram), freq);
             }
         }
     }
