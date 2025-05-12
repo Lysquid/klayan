@@ -28,108 +28,65 @@ impl std::str::FromStr for Geometry {
     }
 }
 
+// Key size unit.
+// It's 4 to be able to divide by 4 for staggered layout without having to use floats
 pub const U: u32 = 4;
 
 impl Geometry {
     pub fn lateral_distance(&self, key1: PhysicalKey, key2: PhysicalKey) -> Option<u32> {
-        let offset1 = self.key_horizontal_offset(key1)?;
-        let offset2 = self.key_horizontal_offset(key2)?;
+        let offset1 = self.key_horizontal_position(key1)?;
+        let offset2 = self.key_horizontal_position(key2)?;
         return Some(offset1.abs_diff(offset2));
     }
 
-    fn key_horizontal_offset(&self, key: PhysicalKey) -> Option<u32> {
+    fn key_horizontal_position(&self, key: PhysicalKey) -> Option<u32> {
         use Geometry::*;
         use PhysicalKey::*;
         match self {
+            Ortho => self.key_horizontal_position_ortho(key),
             ISO | ISOOpti | ANSI | ANSIOpti => {
-                const TAB: u32 = U + U / 2;
-                const CAPS: u32 = U + 3 * U / 4;
-                let shift: u32 = match self {
-                    ISO | ISOOpti => U + 3 * U / 4,
-                    ANSI | ANSIOpti => U + 3 * U / 4,
-                    _ => panic!(),
-                };
+                const TAB: u32 = U + U / 2; // 1.5U
+                const CAPS: u32 = U + 3 * U / 4; // 1.75U
+                const SHIFT: u32 = 2 * U + U / 4; // 2.25U
                 match key {
-                    // digit row
-                    Backquote => Some(0),
-                    Digit1 => Some(U),
-                    Digit2 => Some(2 * U),
-                    Digit3 => Some(3 * U),
-                    Digit4 => Some(4 * U),
-                    Digit5 => Some(5 * U),
-                    Digit6 => Some(6 * U),
-                    Digit7 => Some(7 * U),
-                    Digit8 => Some(8 * U),
-                    Digit9 => Some(9 * U),
-                    Digit0 => Some(10 * U),
-                    Minus => Some(11 * U),
-                    Equal => Some(12 * U),
-                    // upper row
-                    KeyQ => Some(TAB),
-                    KeyW => Some(TAB + U),
-                    KeyE => Some(TAB + 2 * U),
-                    KeyR => Some(TAB + 3 * U),
-                    KeyT => Some(TAB + 4 * U),
-                    KeyY => Some(TAB + 5 * U),
-                    KeyU => Some(TAB + 6 * U),
-                    KeyI => Some(TAB + 7 * U),
-                    KeyO => Some(TAB + 8 * U),
-                    KeyP => Some(TAB + 9 * U),
-                    BracketLeft => Some(TAB + 10 * U),
-                    BracketRight => Some(TAB + 11 * U),
-                    // middle row
-                    KeyA => Some(CAPS),
-                    KeyS => Some(CAPS + U),
-                    KeyD => Some(CAPS + 2 * U),
-                    KeyF => Some(CAPS + 3 * U),
-                    KeyG => Some(CAPS + 4 * U),
-                    KeyH => Some(CAPS + 5 * U),
-                    KeyJ => Some(CAPS + 6 * U),
-                    KeyK => Some(CAPS + 7 * U),
-                    KeyL => Some(CAPS + 8 * U),
-                    Semicolon => Some(CAPS + 9 * U),
-                    Quote => Some(CAPS + 10 * U),
-                    // lower row
-                    KeyZ => Some(shift),
-                    KeyX => Some(shift + U),
-                    KeyC => Some(shift + 2 * U),
-                    KeyV => Some(shift + 3 * U),
-                    KeyB => Some(shift + 4 * U),
-                    KeyN => Some(shift + 5 * U),
-                    KeyM => Some(shift + 6 * U),
-                    Comma => Some(shift + 7 * U),
-                    Period => Some(shift + 8 * U),
-                    Slash => Some(shift + 9 * U),
-                    // layout specific
                     Backslash => match self {
                         ISO | ISOOpti => Some(CAPS + 11 * U),
                         ANSI | ANSIOpti => Some(TAB + 12 * U),
                         _ => panic!(),
                     },
                     IntlBackslash => match self {
-                        ISO | ISOOpti => Some(shift),
+                        ISO | ISOOpti => Some(SHIFT),
                         ANSI | ANSIOpti => None,
                         _ => panic!(),
                     },
-                    Space => None,
+                    _ => Some(match Row::from(key) {
+                        Row::Upper => self.key_horizontal_position_ortho(key)? + TAB - U,
+                        Row::Middle => self.key_horizontal_position_ortho(key)? + CAPS - U,
+                        Row::Lower => self.key_horizontal_position_ortho(key)? + SHIFT - U,
+                        _ => self.key_horizontal_position_ortho(key)?,
+                    }),
                 }
             }
-            Ortho => match key {
-                Backquote => Some(0),
-                Digit1 | KeyQ | KeyA | KeyZ => Some(U),
-                Digit2 | KeyW | KeyS | KeyX => Some(2 * U),
-                Digit3 | KeyE | KeyD | KeyC => Some(3 * U),
-                Digit4 | KeyR | KeyF | KeyV => Some(4 * U),
-                Digit5 | KeyT | KeyG | KeyB => Some(5 * U),
-                Digit6 | KeyY | KeyH | KeyN => Some(6 * U),
-                Digit7 | KeyU | KeyJ | KeyM => Some(7 * U),
-                Digit8 | KeyI | KeyK | Comma => Some(8 * U),
-                Digit9 | KeyO | KeyL | Period => Some(9 * U),
-                Digit0 | KeyP | Semicolon | Slash => Some(10 * U),
-                Minus | BracketLeft | Quote | Backslash => Some(11 * U),
-                Equal | BracketRight => Some(12 * U),
-                Space | IntlBackslash => None,
-            },
+        }
+    }
+
+    fn key_horizontal_position_ortho(&self, key: PhysicalKey) -> Option<u32> {
+        use PhysicalKey::*;
+        match key {
+            Backquote => Some(0),
+            Digit1 | KeyQ | KeyA | KeyZ => Some(U),
+            Digit2 | KeyW | KeyS | KeyX => Some(2 * U),
+            Digit3 | KeyE | KeyD | KeyC => Some(3 * U),
+            Digit4 | KeyR | KeyF | KeyV => Some(4 * U),
+            Digit5 | KeyT | KeyG | KeyB => Some(5 * U),
+            Digit6 | KeyY | KeyH | KeyN => Some(6 * U),
+            Digit7 | KeyU | KeyJ | KeyM => Some(7 * U),
+            Digit8 | KeyI | KeyK | Comma => Some(8 * U),
+            Digit9 | KeyO | KeyL | Period => Some(9 * U),
+            Digit0 | KeyP | Semicolon | Slash => Some(10 * U),
+            Minus | BracketLeft | Quote | Backslash => Some(11 * U),
+            Equal | BracketRight => Some(12 * U),
+            Space | IntlBackslash => None,
         }
     }
 }
