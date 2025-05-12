@@ -36,6 +36,31 @@ impl<'de> serde::Deserialize<'de> for Symbol {
     }
 }
 
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+pub struct DeadKey {
+    pub name: char,
+}
+
+impl std::fmt::Display for DeadKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "*{}", self.name)
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for DeadKey {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(d)?;
+        let mut chars = s.chars();
+
+        match (chars.next(), chars.next(), chars.next()) {
+            (Some('*'), Some(second), None) => Ok(DeadKey { name: second }),
+            _ => Err(serde::de::Error::custom(format!("Invalid dead key: {s}"))),
+        }
+    }
+}
+
+
 #[derive(Debug, PartialEq)]
 pub struct ModMapping {
     pub base: Option<Symbol>,
@@ -82,29 +107,6 @@ impl<'de> serde::Deserialize<'de> for ModMapping {
             altgr: Symbol::filter_empty(iter.next()),
             altgr_shift: Symbol::filter_empty(iter.next()),
         })
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub struct DeadKey {
-    pub name: char,
-}
-
-impl std::fmt::Display for DeadKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "*{}", self.name)
-    }
-}
-
-impl<'de> serde::Deserialize<'de> for DeadKey {
-    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
-        let s = String::deserialize(d)?;
-        let mut chars = s.chars();
-
-        match (chars.next(), chars.next(), chars.next()) {
-            (Some('*'), Some(second), None) => Ok(DeadKey { name: second }),
-            _ => Err(serde::de::Error::custom(format!("Invalid dead key: {s}"))),
-        }
     }
 }
 

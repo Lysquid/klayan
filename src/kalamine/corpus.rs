@@ -1,35 +1,5 @@
 use std::collections::HashMap;
 
-// The point of having an struct with wrapper for data is to do the validation
-// during deserialization, to have helpful error messages with the line/column number
-#[derive(Debug, serde::Deserialize)]
-struct CorpusJSON {
-    corpus: String,
-    symbols: HashMap<Ngram<1>, f32>,
-    digrams: HashMap<Ngram<2>, f32>,
-    trigrams: HashMap<Ngram<3>, f32>,
-}
-
-#[derive(Debug, PartialEq, Eq, Hash)]
-struct Ngram<const N: usize>(pub [char; N]);
-
-impl<'de, const N: usize> serde::Deserialize<'de> for Ngram<N> {
-    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
-        let s = String::deserialize(d)?;
-        let chars: Vec<char> = s.chars().collect();
-
-        if chars.len() != N {
-            return Err(serde::de::Error::custom(format!(
-                "expected {N} characters, got {}",
-                chars.len()
-            )));
-        }
-
-        let symbols: [char; N] = chars.try_into().unwrap();
-        Ok(Ngram(symbols))
-    }
-}
-
 #[derive(Debug, PartialEq)]
 pub struct Corpus {
     pub path: String,
@@ -60,6 +30,36 @@ impl<'de> serde::Deserialize<'de> for Corpus {
             digrams: ngram_to_char_array(corpus.digrams),
             trigrams: ngram_to_char_array(corpus.trigrams),
         })
+    }
+}
+
+// The point of having an struct with wrapper for data is to do the validation
+// during deserialization, to have helpful error messages with the line/column number
+#[derive(Debug, serde::Deserialize)]
+struct CorpusJSON {
+    corpus: String,
+    symbols: HashMap<Ngram<1>, f32>,
+    digrams: HashMap<Ngram<2>, f32>,
+    trigrams: HashMap<Ngram<3>, f32>,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct Ngram<const N: usize>(pub [char; N]);
+
+impl<'de, const N: usize> serde::Deserialize<'de> for Ngram<N> {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(d)?;
+        let chars: Vec<char> = s.chars().collect();
+
+        if chars.len() != N {
+            return Err(serde::de::Error::custom(format!(
+                "expected {N} characters, got {}",
+                chars.len()
+            )));
+        }
+
+        let symbols: [char; N] = chars.try_into().unwrap();
+        Ok(Ngram(symbols))
     }
 }
 

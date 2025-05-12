@@ -1,6 +1,24 @@
 use crate::kalamine::symbols::{DeadKey, ModMapping, Symbol};
 use std::collections::HashMap;
 
+#[derive(Debug, serde::Deserialize)]
+pub struct Layout {
+    // name: String,
+    // description: String,
+    // geometry: Geometry,
+    pub keymap: HashMap<PhysicalKey, ModMapping>,
+    pub deadkeys: HashMap<DeadKey, HashMap<Symbol, Symbol>>,
+    // altgr: bool,
+}
+
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Geometry {
+    Ergo,
+    ISO,
+    Compact,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Deserialize)]
 pub enum PhysicalKey {
     KeyQ,
@@ -52,22 +70,4 @@ pub enum PhysicalKey {
     Backquote,
     Backslash,
     IntlBackslash,
-}
-
-#[derive(Debug, serde::Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Geometry {
-    Ergo,
-    ISO,
-    Compact,
-}
-
-#[derive(Debug, serde::Deserialize)]
-pub struct Layout {
-    // name: String,
-    // description: String,
-    // geometry: Geometry,
-    pub keymap: HashMap<PhysicalKey, ModMapping>,
-    pub deadkeys: HashMap<DeadKey, HashMap<Symbol, Symbol>>,
-    // altgr: bool,
 }

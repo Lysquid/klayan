@@ -1,4 +1,3 @@
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 use itertools::Itertools;
@@ -8,17 +7,43 @@ use crate::hands::{Finger, Hand};
 use crate::kalamine::PhysicalKey;
 use crate::keystrokes::Keystrokes;
 
-fn bigram_two_keys_iter(
-    sym_to_keystrokes: &HashMap<char, Keystrokes>,
-    bigram: [char; 2],
-) -> Option<impl Iterator<Item = (&PhysicalKey, &PhysicalKey)>> {
-    let ks1 = sym_to_keystrokes.get(&bigram[0])?;
-    let ks2 = sym_to_keystrokes.get(&bigram[1])?;
-    Some(ks1.iter().chain(ks2.iter()).tuple_windows())
-}
+use super::utils::add_or_insert;
 
-pub fn add_freq<K>(entry: Entry<'_, K, f32>, freq: f32) {
-    entry.and_modify(|f| *f += freq).or_insert(freq);
+pub fn calc_bigrams(
+    sym_to_keystrokes: &HashMap<char, Keystrokes>,
+    bigrams_freq: &HashMap<[char; 2], f32>,
+    geometry: Geometry,
+) -> (HashMap<[char; 2], f32>, HashMap<[char; 2], f32>) {
+    let mut sfb: HashMap<[char; 2], f32> = HashMap::new();
+    let mut sku: HashMap<[char; 2], f32> = HashMap::new();
+    let mut per_finger_sfb: HashMap<Finger, f32> = HashMap::new();
+    let mut per_finger_sku: HashMap<Finger, f32> = HashMap::new();
+    let mut lsb: HashMap<[char; 2], f32> = HashMap::new();
+    let mut scissors: HashMap<[char; 2], f32> = HashMap::new();
+
+    for (&bigram, &freq) in bigrams_freq {
+        let iter = match bigram_two_keys_iter(sym_to_keystrokes, bigram) {
+            Some(iter) => iter,
+            None => continue,
+        };
+        for (&key1, &key2) in iter {
+            let finger1 = Finger::from(key1);
+            let finger2 = Finger::from(key2);
+            if key1 == key2 {
+                add_or_insert(sku.entry(bigram), freq);
+                add_or_insert(per_finger_sku.entry(finger1), freq);
+            } else if finger1 == finger2 {
+                add_or_insert(sfb.entry(bigram), freq);
+                add_or_insert(per_finger_sfb.entry(finger1), freq);
+            } else if is_lsb(key1, key2, geometry) {
+                add_or_insert(lsb.entry(bigram), freq);
+            }
+            if is_scissors(key1, key2) {
+                add_or_insert(scissors.entry(bigram), freq);
+            }
+        }
+    }
+    (sfb, sku)
 }
 
 /// Using keyboard layout doc definition
@@ -52,41 +77,13 @@ fn is_scissors(key1: PhysicalKey, key2: PhysicalKey) -> bool {
     }
 }
 
-pub fn calc_bigrams(
+fn bigram_two_keys_iter(
     sym_to_keystrokes: &HashMap<char, Keystrokes>,
-    bigrams_freq: &HashMap<[char; 2], f32>,
-    geometry: Geometry,
-) -> (HashMap<[char; 2], f32>, HashMap<[char; 2], f32>) {
-    let mut sfb: HashMap<[char; 2], f32> = HashMap::new();
-    let mut sku: HashMap<[char; 2], f32> = HashMap::new();
-    let mut lsb: HashMap<[char; 2], f32> = HashMap::new();
-    let mut scissors: HashMap<[char; 2], f32> = HashMap::new();
-    let mut per_finger_sfb: HashMap<Finger, f32> = HashMap::new();
-    let mut per_finger_sku: HashMap<Finger, f32> = HashMap::new();
-
-    for (&bigram, &freq) in bigrams_freq {
-        let iter = match bigram_two_keys_iter(sym_to_keystrokes, bigram) {
-            Some(iter) => iter,
-            None => continue,
-        };
-        for (&key1, &key2) in iter {
-            let finger1 = Finger::from(key1);
-            let finger2 = Finger::from(key2);
-            if key1 == key2 {
-                add_freq(sku.entry(bigram), freq);
-                add_freq(per_finger_sku.entry(finger1), freq);
-            } else if finger1 == finger2 {
-                add_freq(sfb.entry(bigram), freq);
-                add_freq(per_finger_sfb.entry(finger1), freq);
-            } else if is_lsb(key1, key2, geometry) {
-                add_freq(lsb.entry(bigram), freq);
-            }
-            if is_scissors(key1, key2) {
-                add_freq(scissors.entry(bigram), freq);
-            }
-        }
-    }
-    (sfb, sku)
+    bigram: [char; 2],
+) -> Option<impl Iterator<Item = (&PhysicalKey, &PhysicalKey)>> {
+    let ks1 = sym_to_keystrokes.get(&bigram[0])?;
+    let ks2 = sym_to_keystrokes.get(&bigram[1])?;
+    Some(ks1.iter().chain(ks2.iter()).tuple_windows())
 }
 
 #[cfg(test)]

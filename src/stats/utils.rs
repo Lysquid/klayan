@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 
 pub fn normalize<K>(map: &mut HashMap<K, f32>) {
     let total: f32 = map.values().sum();
@@ -15,4 +16,8 @@ pub fn sort_vec_by_key<K: PartialOrd, V>(vec: &mut Vec<(K, V)>) {
 
 pub fn map_to_vec<K, V>(map: HashMap<K, V>) -> Vec<(K, V)> {
     map.into_iter().collect()
+}
+
+pub fn add_or_insert<K>(entry: Entry<'_, K, f32>, freq: f32) {
+    entry.and_modify(|f| *f += freq).or_insert(freq);
 }
