@@ -1,13 +1,10 @@
-use std::collections::HashMap;
-
-use itertools::Itertools;
-
 use crate::geometry::{Geometry, Row, U};
 use crate::hands::{Finger, Hand};
 use crate::kalamine::PhysicalKey;
 use crate::keystrokes::Keystrokes;
+use std::collections::HashMap;
 
-use super::utils::add_or_insert;
+use super::utils::{add_or_insert, bigram_two_keys_iter};
 
 pub fn calc_bigrams(
     sym_to_keystrokes: &HashMap<char, Keystrokes>,
@@ -43,6 +40,8 @@ pub fn calc_bigrams(
             }
         }
     }
+    // TODO: return a struct BigramsAnalysis
+    // and complete it with the total of each stat
     (sfb, sku)
 }
 
@@ -89,15 +88,6 @@ pub fn is_scissors(key1: PhysicalKey, key2: PhysicalKey) -> bool {
     }
 }
 
-fn bigram_two_keys_iter(
-    sym_to_keystrokes: &HashMap<char, Keystrokes>,
-    bigram: [char; 2],
-) -> Option<impl Iterator<Item = (&PhysicalKey, &PhysicalKey)>> {
-    let ks1 = sym_to_keystrokes.get(&bigram[0])?;
-    let ks2 = sym_to_keystrokes.get(&bigram[1])?;
-    Some(ks1.iter().chain(ks2.iter()).tuple_windows())
-}
-
 #[cfg(test)]
 #[rustfmt::skip] 
 mod tests {
@@ -131,13 +121,15 @@ mod tests {
 
     #[test]
     fn scissors() {
-        assert!(is_scissors(KeyV, KeyE));
-        assert!(!is_scissors(KeyF, KeyE));
-        assert!(!is_scissors(KeyR, KeyE));
-        assert!(is_scissors(KeyV, Digit3));
+        assert!(is_scissors(Digit3, KeyV));
+        assert!(is_scissors(KeyE, KeyV));
+        assert!(!is_scissors(KeyD, KeyV));
+        assert!(!is_scissors(KeyC, KeyV));
+        assert!(!is_scissors(KeyV, KeyV));
         assert!(!is_scissors(KeyF, KeyJ));
     }
 
+    // TODO: remove those tests or make them integration tests
     #[test]
     fn clac_bigrams_simple() {
         let sym_to_ks = HashMap::from([

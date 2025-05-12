@@ -1,6 +1,6 @@
 pub mod bigrams;
 pub mod symbols;
-pub mod utils;
+mod utils;
 
 use crate::geometry::Geometry;
 use crate::kalamine::{Corpus, Layout};
