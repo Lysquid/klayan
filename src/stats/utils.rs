@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use std::collections::hash_map::Entry;
+use std::collections::HashMap;
 
 pub fn normalize<K>(map: &mut HashMap<K, f32>) {
     let total: f32 = map.values().sum();

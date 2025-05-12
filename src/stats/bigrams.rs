@@ -29,10 +29,10 @@ pub fn calc_bigrams(
         for (&key1, &key2) in iter {
             let finger1 = Finger::from(key1);
             let finger2 = Finger::from(key2);
-            if key1 == key2 {
+            if is_sku(key1, key2) {
                 add_or_insert(sku.entry(bigram), freq);
                 add_or_insert(per_finger_sku.entry(finger1), freq);
-            } else if finger1 == finger2 {
+            } else if is_sfb_finger(finger1, finger2) {
                 add_or_insert(sfb.entry(bigram), freq);
                 add_or_insert(per_finger_sfb.entry(finger1), freq);
             } else if is_lsb(key1, key2, geometry) {
@@ -46,10 +46,22 @@ pub fn calc_bigrams(
     (sfb, sku)
 }
 
-/// Using keyboard layout doc definition
+pub fn is_sku(key1: PhysicalKey, key2: PhysicalKey) -> bool {
+    key1 == key2
+}
+
+pub fn is_sfb(key1: PhysicalKey, key2: PhysicalKey) -> bool {
+    // TODO: depend on geometry
+    is_sfb_finger(Finger::from(key1), Finger::from(key2))
+}
+
+fn is_sfb_finger(finger1: Finger, finger2: Finger) -> bool {
+    finger1 == finger2
+}
+
+/// Using Keyboard layout doc definition
 /// https://docs.google.com/document/d/1W0jhfqJI2ueJ2FNseR4YAFpNfsUM-_FlREHbpNGmC2o/edit?tab=t.i8oe0bwffr95
-/// with addition of index / pinky case
-fn is_lsb(key1: PhysicalKey, key2: PhysicalKey, geometry: Geometry) -> bool {
+pub fn is_lsb(key1: PhysicalKey, key2: PhysicalKey, geometry: Geometry) -> bool {
     let finger1 = Finger::from(key1);
     let finger2 = Finger::from(key2);
     let finger_dist = match finger1.distance(&finger2) {
@@ -63,17 +75,17 @@ fn is_lsb(key1: PhysicalKey, key2: PhysicalKey, geometry: Geometry) -> bool {
     match finger_dist {
         1 => horizontal_dist >= 2 * U,         // adjacent fingers (2U)
         2 => horizontal_dist >= 3 * U + U / 2, // semi-adjacent fingers (3.5U)
-        3 => horizontal_dist >= 5 * U,         // index & pinky (5U)
         _ => false,
     }
 }
 
-fn is_scissors(key1: PhysicalKey, key2: PhysicalKey) -> bool {
+pub fn is_scissors(key1: PhysicalKey, key2: PhysicalKey) -> bool {
+    // TODO: use defintion from from keyboard layout doc (FSB, HSF)
     let row1 = Row::from(key1);
     let row2 = Row::from(key2);
     match (Hand::from(key1), Hand::from(key2)) {
         (Hand::Thumbs, _) | (_, Hand::Thumbs) => false,
-        (hand1, hand2) => hand1 != hand2 && row1.distance(&row2) >= 2,
+        (hand1, hand2) => hand1 == hand2 && row1.distance(&row2) >= 2,
     }
 }
 
@@ -92,6 +104,39 @@ mod tests {
 
     use super::*;
     use crate::kalamine::PhysicalKey::*;
+
+    #[test]
+    fn lsb() {
+        assert!(!is_lsb(KeyQ, KeyT, Geometry::Ortho));
+        assert!(!is_lsb(KeyW, KeyT, Geometry::Ortho));
+        assert!(is_lsb(KeyE, KeyT, Geometry::Ortho));
+        assert!(!is_lsb(KeyR, KeyT, Geometry::Ortho));
+        assert!(!is_lsb(KeyT, KeyT, Geometry::Ortho));
+        assert!(!is_lsb(KeyY, KeyT, Geometry::Ortho));
+        
+        assert!(!is_lsb(KeyQ, KeyB, Geometry::ANSI));
+        assert!(is_lsb(KeyW, KeyB, Geometry::ANSI)); // LSB due to stagger
+        assert!(is_lsb(KeyE, KeyB, Geometry::ANSI)); 
+        assert!(!is_lsb(KeyR, KeyB, Geometry::ANSI));
+        assert!(!is_lsb(KeyT, KeyB, Geometry::ANSI));
+
+        assert!(!is_lsb(KeyW, KeyG, Geometry::ANSI)); // stagger not big enough
+        
+        assert!(!is_lsb(KeyH, Quote, Geometry::ANSI));
+        assert!(!is_lsb(KeyJ, Quote, Geometry::ANSI));
+        assert!(!is_lsb(KeyK, Quote, Geometry::ANSI));
+        assert!(is_lsb(KeyL, Quote, Geometry::ANSI));
+        assert!(!is_lsb(Semicolon, Quote, Geometry::ANSI));
+    }
+
+    #[test]
+    fn scissors() {
+        assert!(is_scissors(KeyV, KeyE));
+        assert!(!is_scissors(KeyF, KeyE));
+        assert!(!is_scissors(KeyR, KeyE));
+        assert!(is_scissors(KeyV, Digit3));
+        assert!(!is_scissors(KeyF, KeyJ));
+    }
 
     #[test]
     fn clac_bigrams_simple() {

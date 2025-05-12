@@ -36,7 +36,6 @@ impl<'de> serde::Deserialize<'de> for Symbol {
     }
 }
 
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct DeadKey {
     pub name: char,
@@ -59,7 +58,6 @@ impl<'de> serde::Deserialize<'de> for DeadKey {
         }
     }
 }
-
 
 #[derive(Debug, PartialEq)]
 pub struct ModMapping {

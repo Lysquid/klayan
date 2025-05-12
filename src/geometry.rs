@@ -108,9 +108,7 @@ impl Row {
             | Digit9 | Digit0 | Minus | Equal => Self::Digits,
             KeyQ | KeyW | KeyE | KeyR | KeyT | KeyY | KeyU | KeyI | KeyO | KeyP | BracketLeft
             | BracketRight | Backslash => Self::Upper,
-            KeyA | KeyS | KeyD | KeyF | KeyG | KeyH | KeyJ | KeyK | KeyL | Semicolon | Quote => {
-                Self::Middle
-            }
+            KeyA | KeyS | KeyD | KeyF | KeyG | KeyH | KeyJ | KeyK | KeyL | Semicolon | Quote => Self::Middle,
             IntlBackslash | KeyZ | KeyX | KeyC | KeyV | KeyB | KeyN | KeyM | Comma | Period
             | Slash => Self::Lower,
             Space => Self::Spacebar,
