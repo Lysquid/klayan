@@ -33,7 +33,7 @@ impl std::str::FromStr for Geometry {
 pub const U: u32 = 4;
 
 impl Geometry {
-    pub fn lateral_distance(&self, key1: PhysicalKey, key2: PhysicalKey) -> Option<u32> {
+    pub fn horizontal_distance(&self, key1: PhysicalKey, key2: PhysicalKey) -> Option<u32> {
         let offset1 = self.key_horizontal_position(key1)?;
         let offset2 = self.key_horizontal_position(key2)?;
         return Some(offset1.abs_diff(offset2));

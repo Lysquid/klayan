@@ -24,8 +24,8 @@ pub fn calc_bigrams(
             None => continue,
         };
         for (&key1, &key2) in iter {
-            let finger1 = Finger::from(key1);
-            let finger2 = Finger::from(key2);
+            let finger1 = key1.finger();
+            let finger2 = key2.finger();
             if is_sku(key1, key2) {
                 add_or_insert(sku.entry(bigram), freq);
                 add_or_insert(per_finger_sku.entry(finger1), freq);
@@ -51,7 +51,7 @@ pub fn is_sku(key1: PhysicalKey, key2: PhysicalKey) -> bool {
 
 pub fn is_sfb(key1: PhysicalKey, key2: PhysicalKey) -> bool {
     // TODO: depend on geometry
-    is_sfb_finger(Finger::from(key1), Finger::from(key2))
+    is_sfb_finger(key1.finger(), key2.finger())
 }
 
 fn is_sfb_finger(finger1: Finger, finger2: Finger) -> bool {
@@ -61,13 +61,11 @@ fn is_sfb_finger(finger1: Finger, finger2: Finger) -> bool {
 /// Using Keyboard layout doc definition
 /// https://docs.google.com/document/d/1W0jhfqJI2ueJ2FNseR4YAFpNfsUM-_FlREHbpNGmC2o/edit?tab=t.i8oe0bwffr95
 pub fn is_lsb(key1: PhysicalKey, key2: PhysicalKey, geometry: Geometry) -> bool {
-    let finger1 = Finger::from(key1);
-    let finger2 = Finger::from(key2);
-    let finger_dist = match finger1.distance(&finger2) {
+    let finger_dist = match Finger::distance(key1.finger(), key2.finger()) {
         Some(dist) => dist,
         None => return false,
     };
-    let horizontal_dist = match geometry.lateral_distance(key1, key2) {
+    let horizontal_dist = match geometry.horizontal_distance(key1, key2) {
         Some(dist) => dist,
         None => return false,
     };
@@ -82,7 +80,7 @@ pub fn is_scissors(key1: PhysicalKey, key2: PhysicalKey) -> bool {
     // TODO: use defintion from from keyboard layout doc (FSB, HSF)
     let row1 = Row::from(key1);
     let row2 = Row::from(key2);
-    match (Hand::from(key1), Hand::from(key2)) {
+    match (key1.hand(), key2.hand()) {
         (Hand::Thumbs, _) | (_, Hand::Thumbs) => false,
         (hand1, hand2) => hand1 == hand2 && row1.distance(&row2) >= 2,
     }

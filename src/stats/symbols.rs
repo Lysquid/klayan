@@ -15,10 +15,9 @@ pub fn calc_finger_freq(
             Some(ks) => ks,
             None => continue,
         };
-        for keycode in keystrokes {
-            let finger = Finger::from(*keycode);
+        for key in keystrokes {
             finger_freq
-                .entry(finger)
+                .entry(key.finger())
                 .and_modify(|f| *f += freq)
                 .or_insert(*freq);
         }

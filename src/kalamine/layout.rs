@@ -1,4 +1,7 @@
-use crate::kalamine::symbols::{DeadKey, ModMapping, Symbol};
+use crate::{
+    hands::{Finger, Hand},
+    kalamine::symbols::{DeadKey, ModMapping, Symbol},
+};
 use std::collections::HashMap;
 
 #[derive(Debug, serde::Deserialize)]
@@ -70,4 +73,27 @@ pub enum PhysicalKey {
     Backquote,
     Backslash,
     IntlBackslash,
+}
+
+impl PhysicalKey {
+    pub fn finger(&self) -> Finger {
+        // TODO: depend on geometry (opti) / angle mod
+        use PhysicalKey::*;
+        match self {
+            Space => Finger::Thumb,
+            Digit1 | KeyQ | KeyA | KeyZ | IntlBackslash => Finger::LeftPinky,
+            Digit2 | KeyW | KeyS | KeyX => Finger::LeftRing,
+            Digit3 | KeyE | KeyD | KeyC => Finger::LeftMiddle,
+            Digit4 | KeyR | KeyF | KeyV | Digit5 | KeyT | KeyG | KeyB => Finger::LeftIndex,
+            Digit6 | KeyY | KeyH | KeyN | Digit7 | KeyU | KeyJ | KeyM => Finger::RightIndex,
+            Digit8 | KeyI | KeyK | Comma => Finger::RightMiddle,
+            Digit9 | KeyO | KeyL | Period => Finger::RightRing,
+            Digit0 | KeyP | Semicolon | Slash | Minus | Equal | BracketLeft | BracketRight
+            | Quote | Backquote | Backslash => Finger::RightPinky,
+        }
+    }
+
+    pub fn hand(&self) -> Hand {
+        self.finger().hand()
+    }
 }
