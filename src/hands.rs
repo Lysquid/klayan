@@ -22,7 +22,7 @@ impl Finger {
     }
 
     pub fn distance(f1: Finger, f2: Finger) -> Option<u32> {
-        if f1.hand() != f2.hand() || f1 == Self::Thumb || f2 == Self::Thumb {
+        if f1.hand() != f2.hand() {
             return None;
         }
         return Some((f1 as u32).abs_diff(f2 as u32));
@@ -34,4 +34,22 @@ pub enum Hand {
     Left,
     Right,
     Thumbs,
+}
+
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use Finger::*;
+
+    #[test]
+    fn finger_distance() {
+        assert!(Finger::distance(LeftMiddle, LeftIndex).unwrap() == 1);
+        assert!(Finger::distance(RightIndex, RightPinky).unwrap() == 3);
+        assert!(Finger::distance(LeftIndex, LeftIndex).unwrap() == 0);
+        assert!(Finger::distance(LeftIndex, RightIndex).is_none());
+        assert!(Finger::distance(LeftIndex, Thumb).is_none());
+        assert!(Finger::distance(Thumb, Thumb).unwrap() == 0);
+    }
 }

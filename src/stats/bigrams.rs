@@ -15,6 +15,8 @@ pub fn calc_bigrams(
     let mut sku: HashMap<[char; 2], f32> = HashMap::new();
     let mut per_finger_sfb: HashMap<Finger, f32> = HashMap::new();
     let mut per_finger_sku: HashMap<Finger, f32> = HashMap::new();
+    let mut in_rolls: HashMap<[char; 2], f32> = HashMap::new();
+    let mut out_rolls: HashMap<[char; 2], f32> = HashMap::new();
     let mut lsb: HashMap<[char; 2], f32> = HashMap::new();
     let mut scissors: HashMap<[char; 2], f32> = HashMap::new();
 
@@ -24,38 +26,31 @@ pub fn calc_bigrams(
             None => continue,
         };
         for (&key1, &key2) in iter {
-            let finger1 = key1.finger();
-            let finger2 = key2.finger();
-            if is_sku(key1, key2) {
+            if key1 == key2 {
                 add_or_insert(sku.entry(bigram), freq);
-                add_or_insert(per_finger_sku.entry(finger1), freq);
-            } else if is_sfb_finger(finger1, finger2) {
+                add_or_insert(per_finger_sku.entry(key1.finger()), freq);
+            } else if key1.finger() == key2.finger() {
                 add_or_insert(sfb.entry(bigram), freq);
-                add_or_insert(per_finger_sfb.entry(finger1), freq);
-            } else if is_lsb(key1, key2, geometry) {
-                add_or_insert(lsb.entry(bigram), freq);
-            }
-            if is_scissors(key1, key2) {
-                add_or_insert(scissors.entry(bigram), freq);
+                add_or_insert(per_finger_sfb.entry(key1.finger()), freq);
+            } else {
+                // different fingers
+                if is_in_roll(key1, key2) {
+                    add_or_insert(in_rolls.entry(bigram), freq);
+                } else if is_out_roll(key1, key2) {
+                    add_or_insert(out_rolls.entry(bigram), freq);
+                }
+                if is_lsb(key1, key2, geometry) {
+                    add_or_insert(lsb.entry(bigram), freq);
+                }
+                if is_scissors(key1, key2) {
+                    add_or_insert(scissors.entry(bigram), freq);
+                }
             }
         }
     }
     // TODO: return a struct BigramsAnalysis
     // and complete it with the total of each stat
     (sfb, sku)
-}
-
-pub fn is_sku(key1: PhysicalKey, key2: PhysicalKey) -> bool {
-    key1 == key2
-}
-
-pub fn is_sfb(key1: PhysicalKey, key2: PhysicalKey) -> bool {
-    // TODO: depend on geometry
-    is_sfb_finger(key1.finger(), key2.finger())
-}
-
-fn is_sfb_finger(finger1: Finger, finger2: Finger) -> bool {
-    finger1 == finger2
 }
 
 /// Using Keyboard layout doc definition
@@ -86,35 +81,84 @@ pub fn is_scissors(key1: PhysicalKey, key2: PhysicalKey) -> bool {
     }
 }
 
+pub fn is_in_roll(key1: PhysicalKey, key2: PhysicalKey) -> bool {
+    let finger1 = key1.finger();
+    let finger2 = key2.finger();
+    if finger1.hand() == finger2.hand() {
+        match finger1.hand() {
+            Hand::Left => finger1 < finger2,
+            Hand::Right => finger1 > finger2,
+            Hand::Thumbs => false,
+        }
+    } else {
+        false
+    }
+}
+
+pub fn is_out_roll(key1: PhysicalKey, key2: PhysicalKey) -> bool {
+    let finger1 = key1.finger();
+    let finger2 = key2.finger();
+    if finger1.hand() == finger2.hand() {
+        match finger1.hand() {
+            Hand::Left => finger1 > finger2,
+            Hand::Right => finger1 < finger2,
+            Hand::Thumbs => false,
+        }
+    } else {
+        false
+    }
+}
+
 #[cfg(test)]
 #[rustfmt::skip] 
 mod tests {
 
     use super::*;
     use crate::kalamine::PhysicalKey::*;
+    use crate::geometry::Geometry::*;
+
+    #[test]
+    fn in_roll() {
+        assert!(is_in_roll(KeyD, KeyF));
+        assert!(!is_in_roll(KeyF, KeyD));
+        assert!(is_in_roll(KeyK, KeyJ));
+        assert!(!is_in_roll(KeyJ, KeyK));
+        assert!(!is_in_roll(KeyA, Space));
+    }
+
+    #[test]
+    fn out_roll() {
+        assert!(!is_out_roll(KeyD, KeyF));
+        assert!(is_out_roll(KeyF, KeyD));
+        assert!(!is_out_roll(KeyK, KeyJ));
+        assert!(is_out_roll(KeyJ, KeyK));
+        assert!(!is_out_roll(KeyB, Space));
+    }
 
     #[test]
     fn lsb() {
-        assert!(!is_lsb(KeyQ, KeyT, Geometry::Ortho));
-        assert!(!is_lsb(KeyW, KeyT, Geometry::Ortho));
-        assert!(is_lsb(KeyE, KeyT, Geometry::Ortho));
-        assert!(!is_lsb(KeyR, KeyT, Geometry::Ortho));
-        assert!(!is_lsb(KeyT, KeyT, Geometry::Ortho));
-        assert!(!is_lsb(KeyY, KeyT, Geometry::Ortho));
+        assert!(!is_lsb(KeyQ, KeyT, Ortho));
+        assert!(!is_lsb(KeyW, KeyT, Ortho));
+        assert!(is_lsb(KeyE, KeyT, Ortho)); // Middle-Index LSB
+        assert!(!is_lsb(KeyR, KeyT, Ortho));
+        assert!(!is_lsb(KeyT, KeyT, Ortho));
+        assert!(!is_lsb(KeyY, KeyT, Ortho));
         
-        assert!(!is_lsb(KeyQ, KeyB, Geometry::ANSI));
-        assert!(is_lsb(KeyW, KeyB, Geometry::ANSI)); // LSB due to stagger
-        assert!(is_lsb(KeyE, KeyB, Geometry::ANSI)); 
-        assert!(!is_lsb(KeyR, KeyB, Geometry::ANSI));
-        assert!(!is_lsb(KeyT, KeyB, Geometry::ANSI));
+        assert!(!is_lsb(KeyQ, KeyB, ANSI));
+        assert!(is_lsb(KeyW, KeyB, ANSI)); // LSB due to stagger
+        assert!(is_lsb(KeyE, KeyB, ANSI)); 
+        assert!(!is_lsb(KeyR, KeyB, ANSI));
+        assert!(!is_lsb(KeyT, KeyB, ANSI));
 
-        assert!(!is_lsb(KeyW, KeyG, Geometry::ANSI)); // stagger not big enough
+        assert!(!is_lsb(KeyW, KeyG, ANSI)); // stagger not big enough
         
-        assert!(!is_lsb(KeyH, Quote, Geometry::ANSI));
-        assert!(!is_lsb(KeyJ, Quote, Geometry::ANSI));
-        assert!(!is_lsb(KeyK, Quote, Geometry::ANSI));
-        assert!(is_lsb(KeyL, Quote, Geometry::ANSI));
-        assert!(!is_lsb(Semicolon, Quote, Geometry::ANSI));
+        assert!(!is_lsb(KeyH, Quote, ANSI));
+        assert!(!is_lsb(KeyJ, Quote, ANSI));
+        assert!(!is_lsb(KeyK, Quote, ANSI));
+        assert!(is_lsb(KeyL, Quote, ANSI)); // Ring-Pinky LSB
+        assert!(!is_lsb(Semicolon, Quote, ANSI));
+        
+        assert!(!is_lsb(KeyA, Space, Ortho));
     }
 
     #[test]
@@ -125,6 +169,7 @@ mod tests {
         assert!(!is_scissors(KeyC, KeyV));
         assert!(!is_scissors(KeyV, KeyV));
         assert!(!is_scissors(KeyF, KeyJ));
+        assert!(!is_scissors(Digit4, Space));
     }
 
     // TODO: remove those tests or make them integration tests
