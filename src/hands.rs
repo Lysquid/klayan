@@ -36,7 +36,6 @@ pub enum Hand {
     Thumbs,
 }
 
-
 #[cfg(test)]
 mod tests {
 

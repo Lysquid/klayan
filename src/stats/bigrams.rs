@@ -33,7 +33,6 @@ pub fn calc_bigrams(
                 add_or_insert(sfb.entry(bigram), freq);
                 add_or_insert(per_finger_sfb.entry(key1.finger()), freq);
             } else {
-                // different fingers
                 if is_in_roll(key1, key2) {
                     add_or_insert(in_rolls.entry(bigram), freq);
                 } else if is_out_roll(key1, key2) {
@@ -72,12 +71,11 @@ pub fn is_lsb(key1: PhysicalKey, key2: PhysicalKey, geometry: Geometry) -> bool 
 }
 
 pub fn is_scissors(key1: PhysicalKey, key2: PhysicalKey) -> bool {
-    // TODO: use defintion from from keyboard layout doc (FSB, HSF)
-    let row1 = Row::from(key1);
-    let row2 = Row::from(key2);
+    // TODO: do a less simplistic implementation
+    // Later on, use definition from from keyboard layout doc (FSB, HSF)
     match (key1.hand(), key2.hand()) {
         (Hand::Thumbs, _) | (_, Hand::Thumbs) => false,
-        (hand1, hand2) => hand1 == hand2 && row1.distance(&row2) >= 2,
+        (hand1, hand2) => hand1 == hand2 && Row::distance(key1.row(), key2.row()) >= 2,
     }
 }
 

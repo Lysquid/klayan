@@ -59,7 +59,7 @@ impl Geometry {
                         ANSI | ANSIOpti => None,
                         _ => panic!(),
                     },
-                    _ => Some(match Row::from(key) {
+                    _ => Some(match key.row() {
                         Row::Upper => self.key_horizontal_position_ortho(key)? + TAB - U,
                         Row::Middle => self.key_horizontal_position_ortho(key)? + CAPS - U,
                         Row::Lower => self.key_horizontal_position_ortho(key)? + SHIFT - U,
@@ -101,23 +101,7 @@ pub enum Row {
 }
 
 impl Row {
-    #[rustfmt::skip]
-    pub fn from(key: PhysicalKey) -> Self {
-        use PhysicalKey::*;
-        match key {
-            Backquote | Digit1 | Digit2 | Digit3 | Digit4 | Digit5 | Digit6
-            | Digit7 | Digit8 | Digit9 | Digit0 | Minus | Equal => Self::Digits,
-            KeyQ | KeyW | KeyE | KeyR | KeyT | KeyY | KeyU | KeyI | KeyO
-            | KeyP | BracketLeft | BracketRight | Backslash => Self::Upper,
-            KeyA | KeyS | KeyD | KeyF | KeyG | KeyH | KeyJ
-            | KeyK | KeyL | Semicolon | Quote => Self::Middle,
-            IntlBackslash | KeyZ | KeyX | KeyC | KeyV | KeyB
-            | KeyN | KeyM | Comma | Period | Slash => Self::Lower,
-            Space => Self::Spacebar,
-        }
-    }
-
-    pub fn distance(&self, other: &Self) -> u32 {
-        (*self as u32).abs_diff(*other as u32)
+    pub fn distance(r1: Row, r2: Row) -> u32 {
+        (r1 as u32).abs_diff(r2 as u32)
     }
 }

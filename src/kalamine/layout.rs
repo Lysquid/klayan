@@ -1,4 +1,5 @@
 use crate::{
+    geometry::Row,
     hands::{Finger, Hand},
     kalamine::symbols::{DeadKey, ModMapping, Symbol},
 };
@@ -90,6 +91,22 @@ impl PhysicalKey {
             Digit9 | KeyO | KeyL | Period => Finger::RightRing,
             Digit0 | KeyP | Semicolon | Slash | Minus | Equal | BracketLeft | BracketRight
             | Quote | Backquote | Backslash => Finger::RightPinky,
+        }
+    }
+
+    #[rustfmt::skip]
+    pub fn row(&self) -> Row {
+        use PhysicalKey::*;
+        match self {
+            Backquote | Digit1 | Digit2 | Digit3 | Digit4 | Digit5 | Digit6
+            | Digit7 | Digit8 | Digit9 | Digit0 | Minus | Equal => Row::Digits,
+            KeyQ | KeyW | KeyE | KeyR | KeyT | KeyY | KeyU | KeyI | KeyO
+            | KeyP | BracketLeft | BracketRight | Backslash => Row::Upper,
+            KeyA | KeyS | KeyD | KeyF | KeyG | KeyH | KeyJ
+            | KeyK | KeyL | Semicolon | Quote => Row::Middle,
+            IntlBackslash | KeyZ | KeyX | KeyC | KeyV | KeyB
+            | KeyN | KeyM | Comma | Period | Slash => Row::Lower,
+            Space => Row::Spacebar,
         }
     }
 
