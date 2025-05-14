@@ -11,6 +11,14 @@ pub enum Finger {
     RightPinky = 8,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum RollDirection {
+    Inside,
+    Outside,
+    SameFinger,
+    DifferentHands,
+}
+
 impl Finger {
     pub fn hand(&self) -> Hand {
         use Finger::*;
@@ -26,6 +34,26 @@ impl Finger {
             return None;
         }
         return Some((f1 as u32).abs_diff(f2 as u32));
+    }
+
+    pub fn roll_direction(&self, second_finger: Finger) -> RollDirection {
+        if *self == second_finger {
+            RollDirection::SameFinger
+        } else if self.hand() != second_finger.hand() {
+            RollDirection::DifferentHands
+        } else if self.hand() == Hand::Left {
+            if second_finger > *self {
+                RollDirection::Inside
+            } else {
+                RollDirection::Outside
+            }
+        } else {
+            if second_finger > *self {
+                RollDirection::Outside
+            } else {
+                RollDirection::Inside
+            }
+        }
     }
 }
 
@@ -50,5 +78,17 @@ mod tests {
         assert!(Finger::distance(LeftIndex, RightIndex).is_none());
         assert!(Finger::distance(LeftIndex, Thumb).is_none());
         assert!(Finger::distance(Thumb, Thumb).unwrap() == 0);
+    }
+
+    #[test]
+    fn roll_direction() {
+        use RollDirection::*;
+        assert_eq!(LeftMiddle.roll_direction(LeftIndex), Inside);
+        assert_eq!(LeftIndex.roll_direction(LeftMiddle), Outside);
+        assert_eq!(LeftIndex.roll_direction(LeftIndex), SameFinger);
+        assert_eq!(LeftIndex.roll_direction(RightIndex), DifferentHands);
+
+        assert_eq!(RightMiddle.roll_direction(RightIndex), Inside);
+        assert_eq!(RightIndex.roll_direction(RightMiddle), Outside);
     }
 }

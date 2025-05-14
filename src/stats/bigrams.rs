@@ -1,5 +1,5 @@
 use crate::geometry::{Geometry, Row, U};
-use crate::hands::{Finger, Hand};
+use crate::hands::{Finger, Hand, RollDirection};
 use crate::kalamine::PhysicalKey;
 use crate::keystrokes::Keystrokes;
 use std::collections::HashMap;
@@ -82,29 +82,13 @@ pub fn is_scissors(key1: PhysicalKey, key2: PhysicalKey) -> bool {
 pub fn is_in_roll(key1: PhysicalKey, key2: PhysicalKey) -> bool {
     let finger1 = key1.finger();
     let finger2 = key2.finger();
-    if finger1.hand() == finger2.hand() {
-        match finger1.hand() {
-            Hand::Left => finger1 < finger2,
-            Hand::Right => finger1 > finger2,
-            Hand::Thumbs => false,
-        }
-    } else {
-        false
-    }
+    finger1.roll_direction(finger2) == RollDirection::Inside
 }
 
 pub fn is_out_roll(key1: PhysicalKey, key2: PhysicalKey) -> bool {
     let finger1 = key1.finger();
     let finger2 = key2.finger();
-    if finger1.hand() == finger2.hand() {
-        match finger1.hand() {
-            Hand::Left => finger1 > finger2,
-            Hand::Right => finger1 < finger2,
-            Hand::Thumbs => false,
-        }
-    } else {
-        false
-    }
+    finger1.roll_direction(finger2) == RollDirection::Outside
 }
 
 #[cfg(test)]
