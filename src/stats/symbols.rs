@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
 use crate::hands::Finger;
-use crate::keystrokes::Keystrokes;
+use crate::kalamine::PhysicalKey;
 use crate::stats::utils;
 
 pub fn calc_finger_freq(
-    sym_to_keystrokes: &HashMap<char, Keystrokes>,
+    sym_to_keystrokes: &HashMap<char, Vec<PhysicalKey>>,
     sym_freq: &HashMap<char, f32>,
 ) -> Vec<(Finger, f32)> {
     let mut finger_freq: HashMap<Finger, f32> = HashMap::new();

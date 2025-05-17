@@ -1,49 +1,49 @@
 use crate::geometry::{Geometry, Row, U};
 use crate::hands::{Finger, Hand, RollDirection};
-use crate::kalamine::PhysicalKey;
-use crate::keystrokes::Keystrokes;
+use crate::kalamine::{PhysicalKey, Symbol};
+use crate::keystrokes::KeySymbol;
 use std::collections::HashMap;
 
-use super::utils::{add_or_insert, bigram_two_keys_iter};
+use super::utils::add_or_insert;
 
-pub fn calc_bigrams(
-    sym_to_keystrokes: &HashMap<char, Keystrokes>,
-    bigrams_freq: &HashMap<[char; 2], f32>,
+type Bigram = [Symbol; 2];
+
+pub fn bigram_stats(
+    bigrams_freq: &Vec<([KeySymbol; 2], f32)>,
     geometry: Geometry,
-) -> (HashMap<[char; 2], f32>, HashMap<[char; 2], f32>) {
-    let mut sfb: HashMap<[char; 2], f32> = HashMap::new();
-    let mut sku: HashMap<[char; 2], f32> = HashMap::new();
+) -> (HashMap<Bigram, f32>, HashMap<Bigram, f32>) {
+    let mut sfb: HashMap<Bigram, f32> = HashMap::new();
+    let mut sku: HashMap<Bigram, f32> = HashMap::new();
     let mut per_finger_sfb: HashMap<Finger, f32> = HashMap::new();
     let mut per_finger_sku: HashMap<Finger, f32> = HashMap::new();
-    let mut in_rolls: HashMap<[char; 2], f32> = HashMap::new();
-    let mut out_rolls: HashMap<[char; 2], f32> = HashMap::new();
-    let mut lsb: HashMap<[char; 2], f32> = HashMap::new();
-    let mut scissors: HashMap<[char; 2], f32> = HashMap::new();
+    let mut in_rolls: HashMap<Bigram, f32> = HashMap::new();
+    let mut out_rolls: HashMap<Bigram, f32> = HashMap::new();
+    let mut lsb: HashMap<Bigram, f32> = HashMap::new();
+    let mut scissors: HashMap<Bigram, f32> = HashMap::new();
 
-    for (&bigram, &freq) in bigrams_freq {
-        let iter = match bigram_two_keys_iter(sym_to_keystrokes, bigram) {
-            Some(iter) => iter,
-            None => continue,
-        };
-        for (&key1, &key2) in iter {
-            if key1 == key2 {
-                add_or_insert(sku.entry(bigram), freq);
-                add_or_insert(per_finger_sku.entry(key1.finger()), freq);
-            } else if key1.finger() == key2.finger() {
-                add_or_insert(sfb.entry(bigram), freq);
-                add_or_insert(per_finger_sfb.entry(key1.finger()), freq);
-            } else {
-                if is_in_roll(key1, key2) {
-                    add_or_insert(in_rolls.entry(bigram), freq);
-                } else if is_out_roll(key1, key2) {
-                    add_or_insert(out_rolls.entry(bigram), freq);
-                }
-                if is_lsb(key1, key2, geometry) {
-                    add_or_insert(lsb.entry(bigram), freq);
-                }
-                if is_scissors(key1, key2) {
-                    add_or_insert(scissors.entry(bigram), freq);
-                }
+    for (bigram_keys, freq) in bigrams_freq {
+        let bigram = [bigram_keys[0].symbol(), bigram_keys[1].symbol()];
+        let freq = *freq;
+        let key1 = bigram_keys[0].key;
+        let key2 = bigram_keys[1].key;
+
+        if key1 == key2 {
+            add_or_insert(sku.entry(bigram), freq);
+            add_or_insert(per_finger_sku.entry(key1.finger()), freq);
+        } else if key1.finger() == key2.finger() {
+            add_or_insert(sfb.entry(bigram), freq);
+            add_or_insert(per_finger_sfb.entry(key1.finger()), freq);
+        } else {
+            if is_in_roll(key1, key2) {
+                add_or_insert(in_rolls.entry(bigram), freq);
+            } else if is_out_roll(key1, key2) {
+                add_or_insert(out_rolls.entry(bigram), freq);
+            }
+            if is_lsb(key1, key2, geometry) {
+                add_or_insert(lsb.entry(bigram), freq);
+            }
+            if is_scissors(key1, key2) {
+                add_or_insert(scissors.entry(bigram), freq);
             }
         }
     }
@@ -152,84 +152,6 @@ mod tests {
         assert!(!is_scissors(KeyV, KeyV));
         assert!(!is_scissors(KeyF, KeyJ));
         assert!(!is_scissors(Digit4, Space));
-    }
-
-    // TODO: remove those tests or make them integration tests
-    #[test]
-    fn clac_bigrams_simple() {
-        let sym_to_ks = HashMap::from([
-            ('e', vec![KeyE]),
-            ('r', vec![KeyR]),
-            ('d', vec![KeyD]),
-        ]);
-        let expected_sfb = HashMap::from([
-            (['e','d'], 1.0),
-            (['d','e'], 1.0),
-        ]);
-        let expected_sku = HashMap::from([
-            (['r','r'], 1.0),
-        ]);
-        let other_bigrams = HashMap::from([
-            (['e','r'], 1.0),
-            (['r','e'], 1.0),
-            (['r','d'], 1.0),
-            (['d','r'], 1.0),
-        ]);
-        let mut bigrams_freq = other_bigrams.clone();
-        bigrams_freq.extend(expected_sfb.iter());
-        bigrams_freq.extend(expected_sku.iter());
-        let (sfb, sku) = calc_bigrams(&sym_to_ks, &bigrams_freq, Geometry::ISO);
-        assert_eq!(sfb, expected_sfb);
-        assert_eq!(sku, expected_sku);
-    }
-
-    #[test]
-    fn clac_bigrams_deadkey() {
-        let sym_to_ks = HashMap::from([
-            ('d', vec![KeyD]),
-            ('e', vec![KeyE]),
-            ('é', vec![Quote, KeyE]),
-        ]);
-        let expected_sfb = HashMap::from([
-            (['é','d'], 1.0),
-        ]);
-        let expected_sku = HashMap::from([
-            (['é', 'e'], 1.0),
-        ]);
-        let other_bigrams = HashMap::from([
-            (['d','é'], 1.0),
-            (['é','e'], 1.0),
-            (['é','é'], 1.0),
-        ]);
-        let mut bigrams_freq = other_bigrams.clone();
-        bigrams_freq.extend(expected_sfb.clone());
-        bigrams_freq.extend(expected_sku.clone());
-        let (sfb, sku) = calc_bigrams(&sym_to_ks, &bigrams_freq, Geometry::ISO);
-        assert_eq!(sfb, expected_sfb);
-        assert_eq!(sku, expected_sku);
-    }
-
-    #[test]
-    fn clac_bigrams_double_deadkey() {
-        let sym_to_ks = HashMap::from([
-            ('e', vec![KeyE]),
-            ('ë', vec![Quote, Quote, KeyE]),
-            ('r', vec![KeyR]),
-        ]);
-        let mut expected_sku = HashMap::from([
-            (['ë', 'r'], 1.0), // sku with double dead key
-            (['ë', 'e'], 1.0),
-            (['ë', 'ë'], 1.0),
-        ]);
-        let other_bigrams = HashMap::from([
-            (['e','r'], 1.0),
-        ]);
-        let mut bigrams_freq = other_bigrams.clone();
-        bigrams_freq.extend(expected_sku.clone());
-        let (_, sku) = calc_bigrams(&sym_to_ks, &bigrams_freq, Geometry::ISO);
-        *expected_sku.get_mut(&['ë', 'e']).unwrap() = 2.0; // ' ' e e => 2 sku
-        *expected_sku.get_mut(&['ë', 'ë']).unwrap() = 2.0; // ' ' e ' ' e => 2 sku
-        assert_eq!(sku, expected_sku);
     }
 
 }
