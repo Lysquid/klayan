@@ -1,9 +1,9 @@
+use super::utils;
 use crate::{
     hands::{Finger, RollDirection},
     kalamine::{PhysicalKey, Symbol},
     keyseq::KeySymbol,
 };
-use super::utils;
 
 type Trigram = [Symbol; 3];
 

@@ -8,10 +8,7 @@ use super::utils::{self, add_or_insert};
 
 type Bigram = [Symbol; 2];
 
-pub fn bigram_stats(
-    bigrams_freq: &Vec<([KeySymbol; 2], f32)>,
-    geometry: Geometry,
-) -> BigramStats {
+pub fn bigram_stats(bigrams_freq: &Vec<([KeySymbol; 2], f32)>, geometry: Geometry) -> BigramStats {
     let mut sfb: Vec<(Bigram, f32)> = Vec::new();
     let mut sku: Vec<(Bigram, f32)> = Vec::new();
     let mut per_finger_sfb: HashMap<Finger, f32> = HashMap::new();
