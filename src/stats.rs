@@ -10,6 +10,9 @@ use crate::{corpus, keystrokes};
 pub fn analyse(layout: &Layout, corpus: &Corpus, geometry: Geometry) {
     let char_to_keyseq = keystrokes::build_keyseq_map(&layout.keymap, &layout.deadkeys);
 
+    let unsupported = symbols::unsupported_characters(&corpus.symbols, &char_to_keyseq);
+    dbg!(&unsupported);
+
     // TODO: repair this
     // let stats = symbols::calc_finger_freq(&char_to_keyseq, &corpus.symbols);
     // dbg!(&stats);
