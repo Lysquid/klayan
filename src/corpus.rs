@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::keyseq::KeySymbol;
 
+/// Garanties uniqueness of n-gram in the returned vector
 pub fn keysym_ngram_freq<const N: usize>(
     ngrams_freq: &HashMap<[char; N], f32>,
     sym_to_keystrokes: &HashMap<char, Vec<KeySymbol>>,

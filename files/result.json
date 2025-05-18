@@ -1,0 +1,106 @@
+{
+    "symbols": {
+        "total": {
+            "unsupported": 5.0
+        },
+        "per_key": {
+            "usage": {
+                "KeyQ": 0.4,
+                "KeyW": 5.4
+            }
+        },
+        "per_finger": {
+            "usage": {
+                "thumb": 0.5,
+                "left_pinkie": 0.5,
+                "left_ring": 0.6
+            }
+        },
+        "per_hand": {
+            "usage": {
+                "left": 0.6,
+                "right": 0.4
+            }
+        },
+        "detail": {
+            "unsupported": {
+                "é": 1.0,
+                "à": 2.0
+            }
+        }
+    },
+    "bigrams": {
+        "total": {
+            "sku": 1.15,
+            "sfb": 7.5,
+            "lsb": 7.5,
+            "scissors": 1.19,
+            "in_rolls": 1.19,
+            "out_rolls": 1.19
+        },
+        "per_finger": {
+            "sku": {
+                "thumb": 0.5,
+                "left_pinkie": 0.5,
+                "left_ring": 0.6
+            },
+            "sfb": {
+                "thumb": 0.5,
+                "left_pinkie": 0.5,
+                "left_ring": 0.6
+            }
+        },
+        "details": {
+            "sku": {
+                "rm": 0.10,
+                "éc": 0.08
+            },
+            "sfb": {
+                "rm": 0.10,
+                "éc": 0.08
+            },
+            "lsb": {
+                "rm": 0.10,
+                "éc": 0.08
+            },
+            "in_rolls": {
+                "rm": 0.10,
+                "éc": 0.08
+            },
+            "out_rolls": {
+                "rm": 0.10,
+                "éc": 0.08
+            },
+            "scissors": {
+                "rm": 0.10,
+                "éc": 0.08
+            }
+        }
+    },
+    "trigrams": {
+        "total": {
+            "sks": 4.50,
+            "sfs": 1.5,
+            "redirects": 4.5,
+            "bad_redirects": 2.6
+        },
+        "detail": {
+            "sks": {
+                "rme": 0.10,
+                "éce": 0.08
+            },
+            "sfs": {
+                "rme": 0.10,
+                "éce": 0.08
+            },
+            "redirects": {
+                "rme": 0.10,
+                "éce": 0.08
+            },
+            "bad_redirects": {
+                "rme": 0.10,
+                "éce": 0.08
+            }
+        }
+    }
+}

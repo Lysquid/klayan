@@ -11,7 +11,7 @@ type Bigram = [Symbol; 2];
 pub fn bigram_stats(
     bigrams_freq: &Vec<([KeySymbol; 2], f32)>,
     geometry: Geometry,
-) -> (Vec<(Bigram, f32)>, Vec<(Bigram, f32)>) {
+) -> BigramStats {
     let mut sfb: Vec<(Bigram, f32)> = Vec::new();
     let mut sku: Vec<(Bigram, f32)> = Vec::new();
     let mut per_finger_sfb: HashMap<Finger, f32> = HashMap::new();
@@ -47,11 +47,23 @@ pub fn bigram_stats(
             }
         }
     }
-    // TODO: return a struct BigramsAnalysis
-    // and complete it with the total of each stat
-    utils::sort_vec_by_value(&mut sfb);
-    utils::sort_vec_by_value(&mut sku);
-    (sfb, sku)
+
+    BigramStats {
+        total_sku: utils::result_sum(&sku),
+        total_sfb: utils::result_sum(&sfb),
+        total_lsb: utils::result_sum(&lsb),
+        total_scissors: utils::result_sum(&scissors),
+        total_in_rolls: utils::result_sum(&in_rolls),
+        total_out_rolls: utils::result_sum(&out_rolls),
+        per_finger_sku: utils::result_vec_from_map(per_finger_sku),
+        per_finger_sfb: utils::result_vec_from_map(per_finger_sfb),
+        list_sku: utils::result_vec(sku),
+        list_sfb: utils::result_vec(sfb),
+        list_lsb: utils::result_vec(lsb),
+        list_in_rolls: utils::result_vec(in_rolls),
+        list_out_rolls: utils::result_vec(out_rolls),
+        list_scissors: utils::result_vec(scissors),
+    }
 }
 
 /// Using Keyboard layout doc definition
@@ -91,6 +103,23 @@ pub fn is_out_roll(key1: PhysicalKey, key2: PhysicalKey) -> bool {
     let finger1 = key1.finger();
     let finger2 = key2.finger();
     finger1.roll_direction(finger2) == RollDirection::Outside
+}
+
+pub struct BigramStats {
+    pub total_sku: f32,
+    pub total_sfb: f32,
+    pub total_lsb: f32,
+    pub total_scissors: f32,
+    pub total_in_rolls: f32,
+    pub total_out_rolls: f32,
+    pub per_finger_sku: Vec<(Finger, f32)>,
+    pub per_finger_sfb: Vec<(Finger, f32)>,
+    pub list_sku: Vec<(Bigram, f32)>,
+    pub list_sfb: Vec<(Bigram, f32)>,
+    pub list_lsb: Vec<(Bigram, f32)>,
+    pub list_in_rolls: Vec<(Bigram, f32)>,
+    pub list_out_rolls: Vec<(Bigram, f32)>,
+    pub list_scissors: Vec<(Bigram, f32)>,
 }
 
 #[cfg(test)]

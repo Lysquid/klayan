@@ -3,10 +3,11 @@ use crate::{
     kalamine::{PhysicalKey, Symbol},
     keyseq::KeySymbol,
 };
+use super::utils;
 
 type Trigram = [Symbol; 3];
 
-pub fn trigram_stats(trigrams_freq: &Vec<([KeySymbol; 3], f32)>) {
+pub fn trigram_stats(trigrams_freq: &Vec<([KeySymbol; 3], f32)>) -> TrigramStats {
     let mut sks: Vec<(Trigram, f32)> = Vec::new();
     let mut sfs: Vec<(Trigram, f32)> = Vec::new();
     let mut redirects: Vec<(Trigram, f32)> = Vec::new();
@@ -35,6 +36,17 @@ pub fn trigram_stats(trigrams_freq: &Vec<([KeySymbol; 3], f32)>) {
                 redirects.push((trigram, freq));
             }
         }
+    }
+
+    TrigramStats {
+        total_sks: utils::result_sum(&sks),
+        total_sfs: utils::result_sum(&sfs),
+        total_redirects: utils::result_sum(&redirects),
+        total_bad_redirects: utils::result_sum(&bad_redirects),
+        list_sks: utils::result_vec(sks),
+        list_sfs: utils::result_vec(sfs),
+        list_redirects: utils::result_vec(redirects),
+        list_bad_redirects: utils::result_vec(bad_redirects),
     }
 }
 
@@ -67,6 +79,17 @@ fn is_bad_finger(finger: Finger) -> bool {
         Finger::LeftIndex | Finger::RightIndex | Finger::Thumb => false,
         _ => true,
     }
+}
+
+pub struct TrigramStats {
+    pub total_sks: f32,
+    pub total_sfs: f32,
+    pub total_redirects: f32,
+    pub total_bad_redirects: f32,
+    pub list_sks: Vec<(Trigram, f32)>,
+    pub list_sfs: Vec<(Trigram, f32)>,
+    pub list_redirects: Vec<(Trigram, f32)>,
+    pub list_bad_redirects: Vec<(Trigram, f32)>,
 }
 
 #[cfg(test)]
