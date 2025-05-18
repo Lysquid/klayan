@@ -1,4 +1,6 @@
-#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash)]
+use strum;
+
+#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash, strum::EnumIter)]
 pub enum Finger {
     Thumb = 0,
     LeftPinky = 1,
@@ -55,24 +57,9 @@ impl Finger {
             }
         }
     }
-
-    pub fn iter_all() -> impl Iterator<Item = Finger> {
-        [
-            Finger::Thumb,
-            Finger::LeftPinky,
-            Finger::LeftRing,
-            Finger::LeftMiddle,
-            Finger::LeftIndex,
-            Finger::RightIndex,
-            Finger::RightMiddle,
-            Finger::RightRing,
-            Finger::RightPinky,
-        ]
-        .into_iter()
-    }
 }
 
-#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash, strum::EnumIter)]
 pub enum Hand {
     Left,
     Right,

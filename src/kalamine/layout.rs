@@ -23,7 +23,9 @@ pub enum Geometry {
     Compact,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, PartialOrd, Eq, Hash, serde::Deserialize, strum::EnumIter,
+)]
 pub enum PhysicalKey {
     KeyQ,
     KeyW,
