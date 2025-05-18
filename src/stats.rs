@@ -13,9 +13,9 @@ pub fn analyse(layout: &Layout, corpus: &Corpus, geometry: Geometry) {
     let unsupported = symbols::unsupported_characters(&corpus.symbols, &char_to_keyseq);
     dbg!(&unsupported);
 
-    // TODO: repair this
-    // let stats = symbols::calc_finger_freq(&char_to_keyseq, &corpus.symbols);
-    // dbg!(&stats);
+    let symbol_freq = corpus::keysym_freq(&corpus.symbols, &char_to_keyseq);
+    let finger_freq = symbols::calc_finger_freq(&symbol_freq);
+    dbg!(&finger_freq);
 
     let bigrams_freq = corpus::keysym_ngram_freq(&corpus.digrams, &char_to_keyseq);
 

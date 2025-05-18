@@ -30,4 +30,13 @@ pub fn keysym_ngram_freq<const N: usize>(
     ngram_map.into_iter().collect()
 }
 
+pub fn keysym_freq(
+    char_freq: &HashMap<char, f32>,
+    sym_to_keystrokes: &HashMap<char, Vec<KeySymbol>>,
+) -> Vec<(KeySymbol, f32)> {
+    let char_freq: HashMap<[char; 1], f32> = char_freq.iter().map(|(c, f)| ([*c], *f)).collect();
+    let res = keysym_ngram_freq(&char_freq, &sym_to_keystrokes);
+    res.iter().map(|(c, f)| (c[0].clone(), *f)).collect()
+}
+
 // TODO: test

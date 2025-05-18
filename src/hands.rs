@@ -55,6 +55,21 @@ impl Finger {
             }
         }
     }
+
+    pub fn iter_all() -> impl Iterator<Item = Finger> {
+        [
+            Finger::Thumb,
+            Finger::LeftPinky,
+            Finger::LeftRing,
+            Finger::LeftMiddle,
+            Finger::LeftIndex,
+            Finger::RightIndex,
+            Finger::RightMiddle,
+            Finger::RightRing,
+            Finger::RightPinky,
+        ]
+        .into_iter()
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash)]

@@ -1,10 +1,10 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
-pub fn normalize<K>(map: &mut HashMap<K, f32>) {
-    let total: f32 = map.values().sum();
-    map.values_mut().for_each(|x| *x /= total);
-}
+// pub fn normalize<K>(map: &mut HashMap<K, f32>) {
+//     let total: f32 = map.values().sum();
+//     map.values_mut().for_each(|x| *x /= total);
+// }
 
 pub fn sort_vec_by_value<K, V: PartialOrd>(vec: &mut Vec<(K, V)>) {
     vec.sort_by(|(_, val1), (_, val2)| val2.partial_cmp(val1).unwrap());
