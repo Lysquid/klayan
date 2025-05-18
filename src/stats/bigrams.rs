@@ -1,7 +1,7 @@
 use crate::geometry::{Geometry, Row, U};
 use crate::hands::{Finger, Hand, RollDirection};
 use crate::kalamine::{PhysicalKey, Symbol};
-use crate::keystrokes::KeySymbol;
+use crate::keyseq::KeySymbol;
 use std::collections::HashMap;
 
 use super::utils::{self, add_or_insert};

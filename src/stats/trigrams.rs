@@ -1,7 +1,7 @@
 use crate::{
     hands::{Finger, RollDirection},
     kalamine::{PhysicalKey, Symbol},
-    keystrokes::KeySymbol,
+    keyseq::KeySymbol,
 };
 
 type Trigram = [Symbol; 3];

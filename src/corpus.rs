@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::keystrokes::KeySymbol;
+use crate::keyseq::KeySymbol;
 
 pub fn keysym_ngram_freq<const N: usize>(
     ngrams_freq: &HashMap<[char; N], f32>,

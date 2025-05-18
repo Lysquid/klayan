@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::hands::Finger;
-use crate::keystrokes::KeySymbol;
+use crate::keyseq::KeySymbol;
 use crate::stats::utils;
 
 use super::utils::add_or_insert;
