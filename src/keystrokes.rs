@@ -1,8 +1,5 @@
 use log::warn;
-use std::{
-    collections::HashMap,
-    hash::Hash,
-};
+use std::{collections::HashMap, hash::Hash};
 
 use crate::{
     hands::Finger,
@@ -17,7 +14,6 @@ pub struct KeySymbol {
 }
 
 impl KeySymbol {
-
     pub fn new(symbol: Symbol, key: PhysicalKey) -> Self {
         Self {
             name: match symbol {
@@ -134,11 +130,7 @@ pub fn build_keyseq_map(
         }
     }
 
-    keyseq_map.extend(
-        base_keysym_map
-            .into_iter()
-            .map(|(c, key)| (c, vec![key])),
-    );
+    keyseq_map.extend(base_keysym_map.into_iter().map(|(c, key)| (c, vec![key])));
     keyseq_map
 }
 
