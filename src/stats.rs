@@ -20,9 +20,6 @@ pub fn analyse(layout: &Layout, corpus: &Corpus, geometry: Geometry) {
     let bigrams_freq = corpus::keysym_ngram_freq(&corpus.digrams, &char_to_keyseq);
 
     let (sfb, sku) = bigrams::bigram_stats(&bigrams_freq, geometry);
-    let mut sfb = utils::map_to_vec(sfb);
-    utils::sort_vec_by_value(&mut sfb);
-    sfb.reverse();
     dbg!(&sfb);
     dbg!(&sku);
 

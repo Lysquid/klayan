@@ -4,22 +4,22 @@ use crate::kalamine::{PhysicalKey, Symbol};
 use crate::keystrokes::KeySymbol;
 use std::collections::HashMap;
 
-use super::utils::add_or_insert;
+use super::utils::{self, add_or_insert};
 
 type Bigram = [Symbol; 2];
 
 pub fn bigram_stats(
     bigrams_freq: &Vec<([KeySymbol; 2], f32)>,
     geometry: Geometry,
-) -> (HashMap<Bigram, f32>, HashMap<Bigram, f32>) {
-    let mut sfb: HashMap<Bigram, f32> = HashMap::new();
-    let mut sku: HashMap<Bigram, f32> = HashMap::new();
+) -> (Vec<(Bigram, f32)>, Vec<(Bigram, f32)>) {
+    let mut sfb: Vec<(Bigram, f32)> = Vec::new();
+    let mut sku: Vec<(Bigram, f32)> = Vec::new();
     let mut per_finger_sfb: HashMap<Finger, f32> = HashMap::new();
     let mut per_finger_sku: HashMap<Finger, f32> = HashMap::new();
-    let mut in_rolls: HashMap<Bigram, f32> = HashMap::new();
-    let mut out_rolls: HashMap<Bigram, f32> = HashMap::new();
-    let mut lsb: HashMap<Bigram, f32> = HashMap::new();
-    let mut scissors: HashMap<Bigram, f32> = HashMap::new();
+    let mut in_rolls: Vec<(Bigram, f32)> = Vec::new();
+    let mut out_rolls: Vec<(Bigram, f32)> = Vec::new();
+    let mut lsb: Vec<(Bigram, f32)> = Vec::new();
+    let mut scissors: Vec<(Bigram, f32)> = Vec::new();
 
     for (bigram_keys, freq) in bigrams_freq {
         let bigram = [bigram_keys[0].symbol(), bigram_keys[1].symbol()];
@@ -28,27 +28,29 @@ pub fn bigram_stats(
         let key2 = bigram_keys[1].key;
 
         if key1 == key2 {
-            add_or_insert(sku.entry(bigram), freq);
+            sku.push((bigram, freq));
             add_or_insert(per_finger_sku.entry(key1.finger()), freq);
         } else if key1.finger() == key2.finger() {
-            add_or_insert(sfb.entry(bigram), freq);
+            sfb.push((bigram, freq));
             add_or_insert(per_finger_sfb.entry(key1.finger()), freq);
         } else {
             if is_in_roll(key1, key2) {
-                add_or_insert(in_rolls.entry(bigram), freq);
+                in_rolls.push((bigram, freq));
             } else if is_out_roll(key1, key2) {
-                add_or_insert(out_rolls.entry(bigram), freq);
+                out_rolls.push((bigram, freq));
             }
             if is_lsb(key1, key2, geometry) {
-                add_or_insert(lsb.entry(bigram), freq);
+                lsb.push((bigram, freq));
             }
             if is_scissors(key1, key2) {
-                add_or_insert(scissors.entry(bigram), freq);
+                scissors.push((bigram, freq));
             }
         }
     }
     // TODO: return a struct BigramsAnalysis
     // and complete it with the total of each stat
+    utils::sort_vec_by_value(&mut sfb);
+    utils::sort_vec_by_value(&mut sku);
     (sfb, sku)
 }
 

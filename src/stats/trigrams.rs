@@ -1,20 +1,16 @@
-use std::collections::HashMap;
-
 use crate::{
     hands::{Finger, RollDirection},
     kalamine::{PhysicalKey, Symbol},
     keystrokes::KeySymbol,
 };
 
-use super::utils::add_or_insert;
-
 type Trigram = [Symbol; 3];
 
 pub fn trigram_stats(trigrams_freq: &Vec<([KeySymbol; 3], f32)>) {
-    let mut sks: HashMap<Trigram, f32> = HashMap::new();
-    let mut sfs: HashMap<Trigram, f32> = HashMap::new();
-    let mut redirects: HashMap<Trigram, f32> = HashMap::new();
-    let mut bad_redirects: HashMap<Trigram, f32> = HashMap::new();
+    let mut sks: Vec<(Trigram, f32)> = Vec::new();
+    let mut sfs: Vec<(Trigram, f32)> = Vec::new();
+    let mut redirects: Vec<(Trigram, f32)> = Vec::new();
+    let mut bad_redirects: Vec<(Trigram, f32)> = Vec::new();
 
     for (trigram_keys, freq) in trigrams_freq {
         let trigram = [
@@ -28,15 +24,15 @@ pub fn trigram_stats(trigrams_freq: &Vec<([KeySymbol; 3], f32)>) {
         let key3 = trigram_keys[2].key;
 
         if is_sks(key1, key2, key3) {
-            add_or_insert(sks.entry(trigram), freq);
+            sks.push((trigram, freq));
         } else if is_sfs(key1, key2, key3) {
-            add_or_insert(sfs.entry(trigram), freq);
+            sfs.push((trigram, freq));
         }
         if is_redirect(key1, key2, key3) {
             if is_redirect_bad(key1, key2, key3) {
-                add_or_insert(bad_redirects.entry(trigram), freq);
+                bad_redirects.push((trigram, freq));
             } else {
-                add_or_insert(redirects.entry(trigram), freq);
+                redirects.push((trigram, freq));
             }
         }
     }
