@@ -4,7 +4,6 @@ use super::utils::add_or_insert;
 use crate::hands::{Finger, Hand};
 use crate::kalamine::PhysicalKey;
 use crate::keyseq::KeySymbol;
-use crate::stats::utils;
 use strum::IntoEnumIterator;
 
 pub fn unigram_stats(keysym_freq: &Vec<(KeySymbol, f32)>) -> UnigramStats {
@@ -21,16 +20,16 @@ pub fn unigram_stats(keysym_freq: &Vec<(KeySymbol, f32)>) -> UnigramStats {
     }
 
     UnigramStats {
-        key_usage: utils::result_vec_sorted_by_key(key_usage.into_iter().collect()),
-        finger_usage: utils::result_vec_sorted_by_key(finger_usage.into_iter().collect()),
-        hand_usage: utils::result_vec_sorted_by_key(hand_usage.into_iter().collect()),
+        key_usage: key_usage,
+        finger_usage: finger_usage,
+        hand_usage: hand_usage,
     }
 }
 
 pub struct UnigramStats {
-    pub key_usage: Vec<(PhysicalKey, f32)>,
-    pub finger_usage: Vec<(Finger, f32)>,
-    pub hand_usage: Vec<(Hand, f32)>,
+    pub key_usage: HashMap<PhysicalKey, f32>,
+    pub finger_usage: HashMap<Finger, f32>,
+    pub hand_usage: HashMap<Hand, f32>,
 }
 
 #[cfg(test)]
@@ -53,7 +52,7 @@ mod tests {
             (KeySymbol::new(Character('u'), KeyU), 0.08),
             (KeySymbol::new(Character('i'), KeyI), 0.09),
         ]);
-        let key_usage: Vec<(PhysicalKey, f32)> = Vec::from([
+        let key_usage: HashMap<PhysicalKey, f32> = HashMap::from([
             (Space, 0.0),
             (KeyQ, 1.0),
             (KeyW, 2.0),
@@ -65,7 +64,7 @@ mod tests {
             (KeyI, 9.0),
         ]);
         use crate::hands::Finger::*;
-        let finger_usage: Vec<(Finger, f32)> = Vec::from([
+        let finger_usage: HashMap<Finger, f32> = HashMap::from([
             (Thumb, 0.0),
             (LeftPinky, 1.0),
             (LeftRing, 2.0),
@@ -76,14 +75,14 @@ mod tests {
             (RightRing, 0.0),
             (RightPinky, 0.0),
         ]);
-        let hand_usage: Vec<(Hand, f32)> =
-            Vec::from([(Hand::Left, 21.0), (Hand::Right, 24.0), (Hand::Thumbs, 0.0)]);
+        let hand_usage: HashMap<Hand, f32> =
+            HashMap::from([(Hand::Left, 21.0), (Hand::Right, 24.0), (Hand::Thumbs, 0.0)]);
         let result = unigram_stats(&keysym_freq);
-        assert_eq!(utils::round_result_vec(result.finger_usage), finger_usage);
-        assert_eq!(utils::round_result_vec(result.hand_usage), hand_usage);
-        let result_key_usage = utils::round_result_vec(result.key_usage);
-        for elem in key_usage.iter() {
-            assert!(result_key_usage.contains(elem));
+        assert_eq!(utils::round_result_map(result.finger_usage), finger_usage);
+        assert_eq!(utils::round_result_map(result.hand_usage), hand_usage);
+        let result_key_usage = utils::round_result_map(result.key_usage);
+        for (key, usage) in key_usage.iter() {
+            assert_eq!(result_key_usage.get(key).unwrap(), usage);
         }
     }
 }

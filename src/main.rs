@@ -4,6 +4,7 @@ use clap::Parser;
 use env_logger;
 use klayan::kalamine;
 use klayan::{self, geometry};
+mod cli_output;
 
 /// Analyse a keyboard layout
 #[derive(Parser)]
@@ -52,5 +53,7 @@ fn main() {
 
     let geometry = cli.geometry.unwrap_or(geometry::Geometry::ISO);
 
-    klayan::analyse(&layout, &corpus, geometry);
+    let stats = klayan::analyse(&layout, &corpus, geometry);
+
+    cli_output::print_output(stats);
 }

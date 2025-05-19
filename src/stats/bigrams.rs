@@ -1,3 +1,5 @@
+use strum::IntoEnumIterator;
+
 use crate::geometry::{Geometry, Row, U};
 use crate::hands::{Finger, Hand, RollDirection};
 use crate::kalamine::{PhysicalKey, Symbol};
@@ -11,8 +13,8 @@ type Bigram = [Symbol; 2];
 pub fn bigram_stats(bigrams_freq: &Vec<([KeySymbol; 2], f32)>, geometry: Geometry) -> BigramStats {
     let mut sfb: Vec<(Bigram, f32)> = Vec::new();
     let mut sku: Vec<(Bigram, f32)> = Vec::new();
-    let mut per_finger_sfb: HashMap<Finger, f32> = HashMap::new();
-    let mut per_finger_sku: HashMap<Finger, f32> = HashMap::new();
+    let mut per_finger_sfb: HashMap<Finger, f32> = Finger::iter().map(|f| (f, 0.0)).collect();
+    let mut per_finger_sku: HashMap<Finger, f32> = Finger::iter().map(|f| (f, 0.0)).collect();
     let mut in_rolls: Vec<(Bigram, f32)> = Vec::new();
     let mut out_rolls: Vec<(Bigram, f32)> = Vec::new();
     let mut lsb: Vec<(Bigram, f32)> = Vec::new();
@@ -52,8 +54,8 @@ pub fn bigram_stats(bigrams_freq: &Vec<([KeySymbol; 2], f32)>, geometry: Geometr
         total_scissors: utils::result_sum(&scissors),
         total_in_rolls: utils::result_sum(&in_rolls),
         total_out_rolls: utils::result_sum(&out_rolls),
-        per_finger_sku: utils::result_vec(per_finger_sku.into_iter().collect()),
-        per_finger_sfb: utils::result_vec(per_finger_sfb.into_iter().collect()),
+        per_finger_sku: per_finger_sku,
+        per_finger_sfb: per_finger_sfb,
         list_sku: utils::result_vec(sku),
         list_sfb: utils::result_vec(sfb),
         list_lsb: utils::result_vec(lsb),
@@ -109,8 +111,8 @@ pub struct BigramStats {
     pub total_scissors: f32,
     pub total_in_rolls: f32,
     pub total_out_rolls: f32,
-    pub per_finger_sku: Vec<(Finger, f32)>,
-    pub per_finger_sfb: Vec<(Finger, f32)>,
+    pub per_finger_sku: HashMap<Finger, f32>,
+    pub per_finger_sfb: HashMap<Finger, f32>,
     pub list_sku: Vec<(Bigram, f32)>,
     pub list_sfb: Vec<(Bigram, f32)>,
     pub list_lsb: Vec<(Bigram, f32)>,

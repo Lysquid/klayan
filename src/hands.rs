@@ -2,7 +2,6 @@ use strum;
 
 #[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash, strum::EnumIter)]
 pub enum Finger {
-    Thumb = 0,
     LeftPinky = 1,
     LeftRing = 2,
     LeftMiddle = 3,
@@ -11,6 +10,7 @@ pub enum Finger {
     RightMiddle = 6,
     RightRing = 7,
     RightPinky = 8,
+    Thumb = 0,
 }
 
 #[derive(Debug, PartialEq)]

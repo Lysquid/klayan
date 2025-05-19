@@ -1,8 +1,8 @@
 finger       usage  sfb   sku          symbol stats        bigram stats      trigram stats
-left  pinky    8.8  0.0   0.07    unsupported  5.40           sku  2.61          sks  2.50
+left  pinky    8.8  0.0   0.07    unsupported   5.4           sku  2.61          sks  2.50
 left  ring    10.2  0.55  0.18     left  hand  51.0           sfb  1.15          sfs  7.00
 left  middle  19.5  0.40  0.12     right hand  49.0           lsb  5.73    redirects  5.60
-left  index   13.6  0.36  0.15                           scissors  1.19    bad redir  0.42
+left  index   13.6  0.36  0.15         thumbs   1.2      scissors  1.19    bad redir  0.42
 right index   17.2  0.94  0.35                           in rolls  18.3
 right middle  13.1  0.34  0.03                          out rolls  13.9
 right ring    11.2  0.02  0.23
