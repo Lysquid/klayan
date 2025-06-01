@@ -10,7 +10,6 @@ pub fn print_output(stats: Stats, full_lists: bool) {
     let mut header: Vec<Cell> = Vec::new();
     let mut rows: [Vec<Cell>; 8] = Default::default();
 
-    // fingers
     header.push(Cell::new("finger").add_attribute(Bold));
     header.push(Cell::new("usage").set_alignment(Right).add_attribute(Bold));
     header.push(Cell::new("sfb").add_attribute(Bold));
@@ -40,7 +39,7 @@ pub fn print_output(stats: Stats, full_lists: bool) {
         rows[i].push(Cell::new(format!("{sku:.2}")));
     }
 
-    header.push(ngram_header("symbol stats", 20));
+    header.push(ngram_header("symbol stats", 19));
     let unsupported = stats.symbols.total_unsupported;
     rows[0].push(ngram_stat("unsupported", unsupported));
 
@@ -57,13 +56,14 @@ pub fn print_output(stats: Stats, full_lists: bool) {
         rows[i].push(Cell::new(""));
     }
 
-    header.push(ngram_header("bigram stats", 17));
+    header.push(ngram_header("bigram stats", 16));
     rows[0].push(ngram_stat("sku", stats.bigrams.total_sku));
     rows[1].push(ngram_stat("sfb", stats.bigrams.total_sfb));
     rows[2].push(ngram_stat("lsb", stats.bigrams.total_lsb));
     rows[3].push(ngram_stat("scissors", stats.bigrams.total_scissors));
     rows[4].push(ngram_stat("in rolls", stats.bigrams.total_in_rolls));
     rows[5].push(ngram_stat("out rolls", stats.bigrams.total_out_rolls));
+    rows[6].push(ngram_stat("all rolls", stats.bigrams.total_all_rolls));
 
     header.push(ngram_header("trigram stats", 20));
     rows[0].push(ngram_stat("sks", stats.trigrams.total_sks));
@@ -73,8 +73,7 @@ pub fn print_output(stats: Stats, full_lists: bool) {
         "bad redirects",
         stats.trigrams.total_bad_redirects,
     ));
-
-    // TODO: add all rolls and all redirects ?
+    rows[4].push(ngram_stat("all redirects", stats.trigrams.total_all_redirects));
 
     let mut table1 = comfy_table::Table::new();
     table1.load_preset(presets::NOTHING).set_header(header);
