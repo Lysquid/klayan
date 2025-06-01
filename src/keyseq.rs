@@ -2,6 +2,7 @@ use log::warn;
 use std::{collections::HashMap, hash::Hash};
 
 use crate::{
+    geometry::Row,
     hands::Finger,
     kalamine::{DeadKey, Mod, ModMapping, PhysicalKey, Symbol},
 };
@@ -142,8 +143,14 @@ fn is_bettery_keysym(keysym: &KeySymbol, old_keysym: Option<&KeySymbol>) -> bool
             if keysym.modifier != old_keysym.modifier {
                 keysym.modifier < old_keysym.modifier
             } else {
-                warn!("non-deterministic choice between two keys for the same character");
-                false
+                let dfh = Row::distance(Row::Middle, keysym.key.row()); // distance from home
+                let old_dfh = Row::distance(Row::Middle, old_keysym.key.row());
+                if dfh != old_dfh {
+                    dfh < old_dfh
+                } else {
+                    warn!("non-deterministic choice between two keys for the same character");
+                    false
+                }
             }
         }
     }
@@ -205,6 +212,7 @@ mod tests {
         let keymap = HashMap::from([
             (KeyA, ModMapping::from(vec!["a", "A", "(", ")"])),
             (KeyB, ModMapping::from(vec!["b", "b", "b", "b"])),
+            (Digit5, ModMapping::from(vec!["b", "b", "b", "b"])),
             (KeyG, ModMapping::from(vec!["g"])),
             (Space, ModMapping::from(vec![" "])),
             (Quote, ModMapping::from(vec!["'"])),
