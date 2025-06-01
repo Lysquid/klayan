@@ -73,7 +73,10 @@ pub fn print_output(stats: Stats, full_lists: bool) {
         "bad redirects",
         stats.trigrams.total_bad_redirects,
     ));
-    rows[4].push(ngram_stat("all redirects", stats.trigrams.total_all_redirects));
+    rows[4].push(ngram_stat(
+        "all redirects",
+        stats.trigrams.total_all_redirects,
+    ));
 
     let mut table1 = comfy_table::Table::new();
     table1.load_preset(presets::NOTHING).set_header(header);

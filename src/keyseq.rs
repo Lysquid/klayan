@@ -3,7 +3,7 @@ use std::{collections::HashMap, hash::Hash};
 
 use crate::{
     hands::Finger,
-    kalamine::{DeadKey, ModMapping, PhysicalKey, Symbol},
+    kalamine::{DeadKey, Mod, ModMapping, PhysicalKey, Symbol},
 };
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -11,10 +11,11 @@ pub struct KeySymbol {
     pub name: char,
     pub key: PhysicalKey,
     pub dead_key: bool,
+    pub modifier: Mod,
 }
 
 impl KeySymbol {
-    pub fn new(symbol: Symbol, key: PhysicalKey) -> Self {
+    pub fn new(symbol: Symbol, key: PhysicalKey, modifier: Mod) -> Self {
         Self {
             name: match symbol {
                 Symbol::Character(c) => c,
@@ -25,6 +26,7 @@ impl KeySymbol {
                 Symbol::Character(_) => false,
                 Symbol::DeadKey(_) => true,
             },
+            modifier,
         }
     }
 
@@ -44,19 +46,15 @@ pub fn build_keyseq_map(
     let mut deadkeys_map: HashMap<DeadKey, Vec<KeySymbol>> = HashMap::new();
 
     // One key characters
-    for (&physical_key, symbols) in layout_keymap.iter() {
-        for symbol in [
-            symbols.base,
-            symbols.shift,
-            symbols.altgr,
-            symbols.altgr_shift,
-        ] {
+    for (&physical_key, mod_mapping) in layout_keymap.iter() {
+        for (modifier, symbol) in mod_mapping.map {
             if let Some(symbol) = symbol {
-                let keysym = KeySymbol::new(symbol, physical_key);
+                let keysym = KeySymbol::new(symbol, physical_key, modifier);
                 match symbol {
                     Symbol::Character(c) => {
-                        base_keysym_map.insert(c, keysym);
-                        // TODO: handle duplicates (take the one with least mods)
+                        if is_bettery_keysym(&keysym, base_keysym_map.get(&c)) {
+                            base_keysym_map.insert(c, keysym);
+                        }
                     }
                     Symbol::DeadKey(c) => {
                         deadkeys_map.insert(DeadKey { name: c }, vec![keysym]);
@@ -120,7 +118,8 @@ pub fn build_keyseq_map(
                 Symbol::DeadKey(c) => {
                     let dk = DeadKey { name: *c };
                     dk_layer_to_parse.push(dk);
-                    let ks = KeySymbol::new(*output_sym, trigger_keysym.key);
+                    let ks =
+                        KeySymbol::new(*output_sym, trigger_keysym.key, trigger_keysym.modifier);
                     keyseq.push(ks);
                     if is_better_keyseq(&keyseq, deadkeys_map.get(&dk)) {
                         deadkeys_map.insert(dk, keyseq);
@@ -134,18 +133,46 @@ pub fn build_keyseq_map(
     keyseq_map
 }
 
+fn is_bettery_keysym(keysym: &KeySymbol, old_keysym: Option<&KeySymbol>) -> bool {
+    match old_keysym {
+        None => true,
+        Some(old_keysym) => keysym.modifier < old_keysym.modifier,
+    }
+}
+
 fn is_better_keyseq(ks: &Vec<KeySymbol>, old_ks: Option<&Vec<KeySymbol>>) -> bool {
     match old_ks {
         None => true,
         Some(old_ks) => {
             if ks.len() == old_ks.len() {
-                // if same length, prefer the one using the thumb
-                count_thumbs(ks) > count_thumbs(old_ks)
+                // if same length, prefer the one using the least mods
+                let mod_count = count_mods(ks);
+                let old_mod_count = count_mods(old_ks);
+                if mod_count != old_mod_count {
+                    mod_count < old_mod_count
+                } else {
+                    // if same length and mods, prefer the one using the thumb
+                    let thumb_count = count_thumbs(ks);
+                    let old_thumb_count = count_thumbs(old_ks);
+                    if thumb_count != old_thumb_count {
+                        thumb_count > old_thumb_count
+                    } else {
+                        warn!("non determinism");
+                        false
+                    }
+                }
             } else {
                 ks.len() < old_ks.len()
             }
         }
     }
+}
+
+fn count_mods(sequence: &Vec<KeySymbol>) -> u32 {
+    sequence
+        .iter()
+        .map(|keysym| keysym.modifier.mod_count())
+        .sum()
 }
 
 fn count_thumbs(sequence: &Vec<KeySymbol>) -> usize {
@@ -160,6 +187,7 @@ mod tests {
     use std::collections::HashMap;
 
     use super::*;
+    use Mod::*;
     use PhysicalKey::*;
     use Symbol::Character;
 
@@ -167,6 +195,7 @@ mod tests {
     fn test_build_keyseq_map() {
         let keymap = HashMap::from([
             (KeyA, ModMapping::from(vec!["a", "A", "(", ")"])),
+            (KeyB, ModMapping::from(vec!["b", "b", "b", "b"])),
             (KeyG, ModMapping::from(vec!["g"])),
             (Space, ModMapping::from(vec![" "])),
             (Quote, ModMapping::from(vec!["'"])),
@@ -206,23 +235,25 @@ mod tests {
         ]);
         let keystrokes_map = build_keyseq_map(&keymap, &deadkeys);
 
-        let ks_a = KeySymbol::new(Character('a'), KeyA);
-        let ks_a_maj = KeySymbol::new(Character('A'), KeyA);
-        let ks_lp = KeySymbol::new(Character('('), KeyA);
-        let ks_rp = KeySymbol::new(Character(')'), KeyA);
-        let ks_g = KeySymbol::new(Character('g'), KeyG);
-        let ks_space = KeySymbol::new(Character(' '), Space);
-        let ks_quote = KeySymbol::new(Character('\''), Quote);
-        let ks_period = KeySymbol::new(Character('.'), Period);
-        let ks_mu = KeySymbol::new(Symbol::DeadKey('µ'), KeyG);
-        let ks_minus = KeySymbol::new(Character('-'), Minus);
-        let ks_caret = KeySymbol::new(Symbol::DeadKey('^'), Minus);
-        let ks_diae = KeySymbol::new(Symbol::DeadKey('¨'), Minus);
+        let ks_a = KeySymbol::new(Character('a'), KeyA, Base);
+        let ks_a_maj = KeySymbol::new(Character('A'), KeyA, Shift);
+        let ks_lp = KeySymbol::new(Character('('), KeyA, Altgr);
+        let ks_rp = KeySymbol::new(Character(')'), KeyA, AltgrShift);
+        let ks_b = KeySymbol::new(Character('b'), KeyB, Base);
+        let ks_g = KeySymbol::new(Character('g'), KeyG, Base);
+        let ks_space = KeySymbol::new(Character(' '), Space, Base);
+        let ks_quote = KeySymbol::new(Character('\''), Quote, Base);
+        let ks_period = KeySymbol::new(Character('.'), Period, Base);
+        let ks_mu = KeySymbol::new(Symbol::DeadKey('µ'), KeyG, Base);
+        let ks_minus = KeySymbol::new(Character('-'), Minus, Shift);
+        let ks_caret = KeySymbol::new(Symbol::DeadKey('^'), Minus, Base);
+        let ks_diae = KeySymbol::new(Symbol::DeadKey('¨'), Minus, Base);
         let expected = HashMap::from([
             ('a', vec![ks_a.clone()]),
             ('A', vec![ks_a_maj.clone()]),
             ('(', vec![ks_lp.clone()]),
             (')', vec![ks_rp.clone()]),
+            ('b', vec![ks_b.clone()]),
             ('g', vec![ks_g.clone()]),
             (' ', vec![ks_space.clone()]),
             ('\'', vec![ks_quote.clone()]),

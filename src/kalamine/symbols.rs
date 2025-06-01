@@ -59,12 +59,28 @@ impl<'de> serde::Deserialize<'de> for DeadKey {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, PartialOrd, Clone, Copy)]
+pub enum Mod {
+    Base,
+    Shift,
+    Altgr,
+    AltgrShift,
+}
+
+impl Mod {
+    pub fn mod_count(&self) -> u32 {
+        match self {
+            Mod::Base => 0,
+            Mod::Shift => 1,
+            Mod::Altgr => 1,
+            Mod::AltgrShift => 2,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub struct ModMapping {
-    pub base: Option<Symbol>,
-    pub shift: Option<Symbol>,
-    pub altgr: Option<Symbol>,
-    pub altgr_shift: Option<Symbol>,
+    pub map: [(Mod, Option<Symbol>); 4],
 }
 
 impl ModMapping {
@@ -78,10 +94,12 @@ impl ModMapping {
 
         let mut iter = symbols.into_iter();
         ModMapping {
-            base: Symbol::filter_empty(iter.next()),
-            shift: Symbol::filter_empty(iter.next()),
-            altgr: Symbol::filter_empty(iter.next()),
-            altgr_shift: Symbol::filter_empty(iter.next()),
+            map: [
+                (Mod::Base, Symbol::filter_empty(iter.next())),
+                (Mod::Shift, Symbol::filter_empty(iter.next())),
+                (Mod::Altgr, Symbol::filter_empty(iter.next())),
+                (Mod::AltgrShift, Symbol::filter_empty(iter.next())),
+            ],
         }
     }
 }
@@ -100,10 +118,12 @@ impl<'de> serde::Deserialize<'de> for ModMapping {
         let mut iter = vec.into_iter();
 
         Ok(ModMapping {
-            base: Symbol::filter_empty(iter.next()),
-            shift: Symbol::filter_empty(iter.next()),
-            altgr: Symbol::filter_empty(iter.next()),
-            altgr_shift: Symbol::filter_empty(iter.next()),
+            map: [
+                (Mod::Base, Symbol::filter_empty(iter.next())),
+                (Mod::Shift, Symbol::filter_empty(iter.next())),
+                (Mod::Altgr, Symbol::filter_empty(iter.next())),
+                (Mod::AltgrShift, Symbol::filter_empty(iter.next())),
+            ],
         })
     }
 }
@@ -187,10 +207,12 @@ mod tests {
         let json = r#"["**", "", "a"]"#;
         let symbols: ModMapping = serde_json::from_str(json).unwrap();
         let expected = ModMapping {
-            base: Some(Symbol::DeadKey('*')),
-            shift: None,
-            altgr: Some(Symbol::Character('a')),
-            altgr_shift: None,
+            map: [
+                (Mod::Base, Some(Symbol::DeadKey('*'))),
+                (Mod::Shift, None),
+                (Mod::Altgr, Some(Symbol::Character('a'))),
+                (Mod::AltgrShift, None),
+            ],
         };
         assert_eq!(symbols, expected);
     }
@@ -200,10 +222,12 @@ mod tests {
         let json = r#"[]"#;
         let symbols: ModMapping = serde_json::from_str(json).unwrap();
         let expected = ModMapping {
-            base: None,
-            shift: None,
-            altgr: None,
-            altgr_shift: None,
+            map: [
+                (Mod::Base, None),
+                (Mod::Shift, None),
+                (Mod::Altgr, None),
+                (Mod::AltgrShift, None),
+            ],
         };
         assert_eq!(symbols, expected);
     }

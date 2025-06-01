@@ -36,22 +36,22 @@ pub struct UnigramStats {
 mod tests {
 
     use super::*;
-    use crate::kalamine::PhysicalKey::*;
+    use crate::kalamine::{Mod::*, PhysicalKey::*};
     use crate::stats::utils;
 
     #[test]
     fn test_unigram_stats() {
         use crate::kalamine::Symbol::Character;
         let keysym_freq: Vec<(KeySymbol, f32)> = Vec::from([
-            (KeySymbol::new(Character('q'), KeyQ), 0.01),
-            (KeySymbol::new(Character('w'), KeyW), 0.02),
-            (KeySymbol::new(Character('e'), KeyE), 0.03),
-            (KeySymbol::new(Character('é'), KeyE), 0.04),
-            (KeySymbol::new(Character('r'), KeyR), 0.05),
-            (KeySymbol::new(Character('t'), KeyT), 0.06),
-            (KeySymbol::new(Character('y'), KeyY), 0.07),
-            (KeySymbol::new(Character('u'), KeyU), 0.08),
-            (KeySymbol::new(Character('i'), KeyI), 0.09),
+            (KeySymbol::new(Character('q'), KeyQ, Base), 0.01),
+            (KeySymbol::new(Character('w'), KeyW, Base), 0.02),
+            (KeySymbol::new(Character('e'), KeyE, Base), 0.03),
+            (KeySymbol::new(Character('é'), KeyE, Base), 0.04),
+            (KeySymbol::new(Character('r'), KeyR, Base), 0.05),
+            (KeySymbol::new(Character('t'), KeyT, Base), 0.06),
+            (KeySymbol::new(Character('y'), KeyY, Base), 0.07),
+            (KeySymbol::new(Character('u'), KeyU, Base), 0.08),
+            (KeySymbol::new(Character('i'), KeyI, Base), 0.09),
         ]);
         let key_usage: HashMap<PhysicalKey, f32> = HashMap::from([
             (Space, 0.0),
