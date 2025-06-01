@@ -43,15 +43,15 @@ mod tests {
     fn test_unigram_stats() {
         use crate::kalamine::Symbol::Character;
         let keysym_freq: Vec<(KeySymbol, f32)> = Vec::from([
-            (KeySymbol::new(Character('q'), KeyQ, Base), 0.01),
-            (KeySymbol::new(Character('w'), KeyW, Base), 0.02),
-            (KeySymbol::new(Character('e'), KeyE, Base), 0.03),
-            (KeySymbol::new(Character('é'), KeyE, Base), 0.04),
-            (KeySymbol::new(Character('r'), KeyR, Base), 0.05),
-            (KeySymbol::new(Character('t'), KeyT, Base), 0.06),
-            (KeySymbol::new(Character('y'), KeyY, Base), 0.07),
-            (KeySymbol::new(Character('u'), KeyU, Base), 0.08),
-            (KeySymbol::new(Character('i'), KeyI, Base), 0.09),
+            (KeySymbol::new(Character('q'), KeyQ, Base), 1.0),
+            (KeySymbol::new(Character('w'), KeyW, Base), 2.0),
+            (KeySymbol::new(Character('e'), KeyE, Base), 3.0),
+            (KeySymbol::new(Character('é'), KeyE, Base), 4.0),
+            (KeySymbol::new(Character('r'), KeyR, Base), 5.0),
+            (KeySymbol::new(Character('t'), KeyT, Base), 6.0),
+            (KeySymbol::new(Character('y'), KeyY, Base), 7.0),
+            (KeySymbol::new(Character('u'), KeyU, Base), 8.0),
+            (KeySymbol::new(Character('i'), KeyI, Base), 9.0),
         ]);
         let key_usage: HashMap<PhysicalKey, f32> = HashMap::from([
             (Space, 0.0),
