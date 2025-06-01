@@ -98,16 +98,16 @@ pub fn print_output(stats: Stats, full_lists: bool) {
     let list_len: Option<usize> = if full_lists { None } else { Some(8) };
 
     let mut rows = Vec::from([
-        list(stats.bigrams.list_sku, list_len),
-        list(stats.bigrams.list_sfb, list_len),
-        list(stats.bigrams.list_lsb, list_len),
-        list(stats.bigrams.list_scissors, list_len),
-        list(stats.bigrams.list_in_rolls, list_len),
-        list(stats.bigrams.list_out_rolls, list_len),
-        list(stats.trigrams.list_sks, list_len),
-        list(stats.trigrams.list_sfs, list_len),
-        list(stats.trigrams.list_redirects, list_len),
-        list(stats.trigrams.list_bad_redirects, list_len),
+        list(stats.bigrams.list_sku, list_len, 2),
+        list(stats.bigrams.list_sfb, list_len, 2),
+        list(stats.bigrams.list_lsb, list_len, 2),
+        list(stats.bigrams.list_scissors, list_len, 2),
+        list(stats.bigrams.list_in_rolls, list_len, 2),
+        list(stats.bigrams.list_out_rolls, list_len, 2),
+        list(stats.trigrams.list_sks, list_len, 2),
+        list(stats.trigrams.list_sfs, list_len, 2),
+        list(stats.trigrams.list_redirects, list_len, 2),
+        list(stats.trigrams.list_bad_redirects, list_len, 2),
     ]);
 
     if !stats.symbols.list_unsupported.is_empty() {
@@ -117,8 +117,8 @@ pub fn print_output(stats: Stats, full_lists: bool) {
             .iter()
             .map(|(c, f)| ([Symbol::Character(*c); 1], *f))
             .collect();
-        header.push(Cell::new("unspted").add_attribute(Bold));
-        rows.push(list(list_unsupported, list_len));
+        header.push(Cell::new("unsprtd").add_attribute(Bold));
+        rows.push(list(list_unsupported, list_len, 3));
     }
 
     let mut table2 = comfy_table::Table::new();
@@ -141,15 +141,24 @@ fn ngram_stat(name: &str, val: f32) -> Cell {
     Cell::new(format!("{name}  {val:>4.0$}", n)).set_alignment(Right)
 }
 
-fn list<const N: usize>(list: Vec<([Symbol; N], f32)>, max_len: Option<usize>) -> Vec<Cell> {
-    let iter: Box<dyn Iterator<Item = &([Symbol; N], f32)>> = match max_len {
-        None => Box::new(list.iter()),
-        Some(max_len) => Box::new(list.iter().take(max_len)),
-    };
-    iter.map_while(|(symbols, freq)| {
-        let line = format!("{} {freq:4.2}", symbols_to_string(symbols));
-        if !line.ends_with("0.00") {
-            Some(Cell::new(line))
+fn list<const N: usize>(
+    list: Vec<([Symbol; N], f32)>,
+    max_len: Option<usize>,
+    precision: u32,
+) -> Vec<Cell> {
+    let min_freq = 0.1f32.powi(precision as i32);
+    match max_len {
+        None => list.iter().take(list.len()),
+        Some(max_len) => list.iter().take(max_len),
+    }
+    .map_while(|(symbols, freq)| {
+        if *freq > min_freq {
+            let text = format!(
+                "{} {freq:4.1$}",
+                symbols_to_string(symbols),
+                precision as usize
+            );
+            Some(Cell::new(text))
         } else {
             None
         }
