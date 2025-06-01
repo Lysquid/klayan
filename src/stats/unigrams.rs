@@ -37,6 +37,7 @@ mod tests {
 
     use super::*;
     use crate::kalamine::PhysicalKey::*;
+    use crate::stats::utils;
 
     #[test]
     fn test_unigram_stats() {
