@@ -16,6 +16,9 @@ struct Cli {
     corpus: PathBuf,
     /// Keyboard geometry
     geometry: Option<klayan::geometry::Geometry>,
+    /// Show the full lists for each statistics
+    #[arg(short, long)]
+    all: bool,
 }
 
 fn main() {
@@ -55,5 +58,5 @@ fn main() {
 
     let stats = klayan::analyse(&layout, &corpus, geometry);
 
-    cli_output::print_output(stats);
+    cli_output::print_output(stats, cli.all);
 }

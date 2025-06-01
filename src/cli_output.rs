@@ -6,7 +6,7 @@ use klayan::{
 };
 use strum::IntoEnumIterator;
 
-pub fn print_output(stats: Stats) {
+pub fn print_output(stats: Stats, full_lists: bool) {
     let mut header: Vec<Cell> = Vec::new();
     let mut rows: [Vec<Cell>; 8] = Default::default();
 
@@ -77,14 +77,8 @@ pub fn print_output(stats: Stats) {
     // TODO: add all rolls and all redirects ?
 
     let mut table1 = comfy_table::Table::new();
-
     table1.load_preset(presets::NOTHING).set_header(header);
-
-    for i in 0..8 {
-        table1.add_row(rows[i].clone());
-    }
-
-    let list_len = max_list_len(&stats).min(5);
+    table1.add_rows(rows);
 
     let mut header: Vec<Cell> = Vec::from([
         Cell::new("sku").add_attribute(Bold),
@@ -98,37 +92,36 @@ pub fn print_output(stats: Stats) {
         Cell::new("redirect").add_attribute(Bold),
         Cell::new("bad redi").add_attribute(Bold),
     ]);
+
+    let list_len: Option<usize> = if full_lists { None } else { Some(8) };
+
+    let mut rows = Vec::from([
+        list(stats.bigrams.list_sku, list_len),
+        list(stats.bigrams.list_sfb, list_len),
+        list(stats.bigrams.list_lsb, list_len),
+        list(stats.bigrams.list_scissors, list_len),
+        list(stats.bigrams.list_in_rolls, list_len),
+        list(stats.bigrams.list_out_rolls, list_len),
+        list(stats.trigrams.list_sks, list_len),
+        list(stats.trigrams.list_sfs, list_len),
+        list(stats.trigrams.list_redirects, list_len),
+        list(stats.trigrams.list_bad_redirects, list_len),
+    ]);
+
     if !stats.symbols.list_unsupported.is_empty() {
-        header.push(Cell::new("unspted").add_attribute(Bold))
+        let list_unsupported: Vec<([Symbol; 1], f32)> = stats
+            .symbols
+            .list_unsupported
+            .iter()
+            .map(|(c, f)| ([Symbol::Character(*c); 1], *f))
+            .collect();
+        header.push(Cell::new("unspted").add_attribute(Bold));
+        rows.push(list(list_unsupported, list_len));
     }
-    let mut rows: Vec<[Cell; 11]> = vec![core::array::from_fn(|_| Cell::new("")); list_len];
-
-    let list_unsupported: Vec<([Symbol; 1], f32)> = stats
-        .symbols
-        .list_unsupported
-        .iter()
-        .map(|(c, f)| ([Symbol::Character(*c); 1], *f))
-        .collect();
-
-    list(&mut rows, 0, list_len, stats.bigrams.list_sku);
-    list(&mut rows, 1, list_len, stats.bigrams.list_sfb);
-    list(&mut rows, 2, list_len, stats.bigrams.list_lsb);
-    list(&mut rows, 3, list_len, stats.bigrams.list_scissors);
-    list(&mut rows, 4, list_len, stats.bigrams.list_in_rolls);
-    list(&mut rows, 5, list_len, stats.bigrams.list_out_rolls);
-    list(&mut rows, 6, list_len, stats.trigrams.list_sks);
-    list(&mut rows, 7, list_len, stats.trigrams.list_sfs);
-    list(&mut rows, 8, list_len, stats.trigrams.list_redirects);
-    list(&mut rows, 9, list_len, stats.trigrams.list_bad_redirects);
-    list(&mut rows, 10, list_len, list_unsupported);
 
     let mut table2 = comfy_table::Table::new();
-
     table2.load_preset(presets::NOTHING).set_header(header);
-
-    for i in 0..list_len {
-        table2.add_row(rows[i].clone());
-    }
+    table2.add_rows(invert_table(rows));
 
     println!("{table1}");
     println!();
@@ -146,20 +139,36 @@ fn ngram_stat(name: &str, val: f32) -> Cell {
     Cell::new(format!("{name}  {val:>4.0$}", n)).set_alignment(Right)
 }
 
-fn list<const N: usize>(
-    rows: &mut Vec<[Cell; 11]>,
-    col: usize,
-    max_len: usize,
-    list: Vec<([Symbol; N], f32)>,
-) {
-    for (i, (symbols, freq)) in list.iter().take(max_len).enumerate() {
-        let cell = Cell::new(format!("{} {freq:4.2}", symbols_to_string(symbols)));
-        rows.get_mut(i)
-            .unwrap()
-            .get_mut(col)
-            .unwrap()
-            .clone_from(&cell);
+fn list<const N: usize>(list: Vec<([Symbol; N], f32)>, max_len: Option<usize>) -> Vec<Cell> {
+    let iter: Box<dyn Iterator<Item = &([Symbol; N], f32)>> = match max_len {
+        None => Box::new(list.iter()),
+        Some(max_len) => Box::new(list.iter().take(max_len)),
+    };
+    iter.map_while(|(symbols, freq)| {
+        let line = format!("{} {freq:4.2}", symbols_to_string(symbols));
+        if !line.ends_with("0.00") {
+            Some(Cell::new(line))
+        } else {
+            None
+        }
+    })
+    .collect()
+}
+
+fn invert_table(cols: Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
+    let max_len = cols.iter().map(|v| v.len()).max().unwrap_or(0);
+    let mut rows: Vec<Vec<Cell>> = Vec::new();
+    for i in 0..max_len {
+        rows.push(
+            cols.iter()
+                .map(|v| match v.get(i) {
+                    Some(c) => c.clone(),
+                    None => Cell::new(""),
+                })
+                .collect(),
+        );
     }
+    rows
 }
 
 fn symbols_to_string<const N: usize>(ngram: &[Symbol; N]) -> String {
@@ -170,21 +179,4 @@ fn symbols_to_string<const N: usize>(ngram: &[Symbol; N]) -> String {
             Symbol::DeadKey(c) => c,
         })
         .collect()
-}
-
-pub fn max_list_len(stats: &Stats) -> usize {
-    stats
-        .symbols
-        .list_unsupported
-        .len()
-        .max(stats.bigrams.list_sku.len())
-        .max(stats.bigrams.list_sfb.len())
-        .max(stats.bigrams.list_lsb.len())
-        .max(stats.bigrams.list_scissors.len())
-        .max(stats.bigrams.list_in_rolls.len())
-        .max(stats.bigrams.list_out_rolls.len())
-        .max(stats.trigrams.list_sks.len())
-        .max(stats.trigrams.list_sfs.len())
-        .max(stats.trigrams.list_redirects.len())
-        .max(stats.trigrams.list_bad_redirects.len())
 }
