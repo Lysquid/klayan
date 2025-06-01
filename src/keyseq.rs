@@ -117,7 +117,9 @@ pub fn build_keyseq_map(
                 }
                 Symbol::DeadKey(c) => {
                     let dk = DeadKey { name: *c };
-                    dk_layer_to_parse.push(dk);
+                    if !dk_layer_to_parse.contains(&dk) {
+                        dk_layer_to_parse.push(dk);
+                    }
                     let ks =
                         KeySymbol::new(*output_sym, trigger_keysym.key, trigger_keysym.modifier);
                     keyseq.push(ks);
@@ -136,7 +138,14 @@ pub fn build_keyseq_map(
 fn is_bettery_keysym(keysym: &KeySymbol, old_keysym: Option<&KeySymbol>) -> bool {
     match old_keysym {
         None => true,
-        Some(old_keysym) => keysym.modifier < old_keysym.modifier,
+        Some(old_keysym) => {
+            if keysym.modifier != old_keysym.modifier {
+                keysym.modifier < old_keysym.modifier
+            } else {
+                warn!("non-deterministic choice between two keys for the same character");
+                false
+            }
+        }
     }
 }
 
@@ -157,7 +166,7 @@ fn is_better_keyseq(ks: &Vec<KeySymbol>, old_ks: Option<&Vec<KeySymbol>>) -> boo
                     if thumb_count != old_thumb_count {
                         thumb_count > old_thumb_count
                     } else {
-                        warn!("non determinism");
+                        warn!("non-deterministic choice between two key sequences for the same character");
                         false
                     }
                 }
