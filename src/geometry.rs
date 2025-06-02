@@ -40,6 +40,7 @@ impl Geometry {
     }
 
     fn key_horizontal_position(&self, key: PhysicalKey) -> Option<u32> {
+        // TODO: is Option really needed here?
         use Geometry::*;
         use PhysicalKey::*;
         match self {

@@ -1,6 +1,6 @@
 use strum::IntoEnumIterator;
 
-use crate::geometry::{Geometry, Row, U};
+use crate::geometry::{self, Geometry, Row, U};
 use crate::hands::{Finger, Hand, RollDirection};
 use crate::kalamine::{PhysicalKey, Symbol};
 use crate::keyseq::KeySymbol;
@@ -41,7 +41,7 @@ pub fn bigram_stats(bigrams_freq: &Vec<([KeySymbol; 2], f32)>, geometry: Geometr
             if is_lsb(key1, key2, geometry) {
                 lsb.push((bigram, freq));
             }
-            if is_scissors(key1, key2) {
+            if is_scissors(key1, key2, geometry) {
                 scissors.push((bigram, freq));
             }
         }
@@ -84,12 +84,30 @@ pub fn is_lsb(key1: PhysicalKey, key2: PhysicalKey, geometry: Geometry) -> bool 
     }
 }
 
-pub fn is_scissors(key1: PhysicalKey, key2: PhysicalKey) -> bool {
-    // TODO: do a less simplistic implementation
-    // Later on, use definition from from keyboard layout doc (FSB, HSF)
-    match (key1.hand(), key2.hand()) {
-        (Hand::Thumbs, _) | (_, Hand::Thumbs) => false,
-        (hand1, hand2) => hand1 == hand2 && Row::distance(key1.row(), key2.row()) >= 2,
+/// Based on Half Scissors Bigrams definition from Keyboard layout doc
+/// https://docs.google.com/document/d/1W0jhfqJI2ueJ2FNseR4YAFpNfsUM-_FlREHbpNGmC2o/edit?tab=t.3j7hpqkn3etl
+/// TODO: maybe split in half/full scissors, or find a "bad scissors" definition
+/// (for now the worst scissors are buried in the list because of low frequencies)
+pub fn is_scissors(key1: PhysicalKey, key2: PhysicalKey, geometry: Geometry) -> bool {
+    if key1.hand() != key2.hand() || key1.hand() == Hand::Thumbs {
+        return false;
+    };
+    let horizontal_dist = match geometry.horizontal_distance(key1, key2) {
+        Some(dist) => dist,
+        None => return false,
+    };
+    if Row::distance(key1.row(), key2.row()) >= 2 && horizontal_dist <= 3 * U
+    && key1.finger() != Finger::LeftIndex && key1.finger() != Finger::RightIndex
+    && key2.finger() != Finger::LeftIndex && key2.finger() != Finger::RightIndex {
+        true
+    } else if Row::distance(key1.row(), key2.row()) >= 1 && horizontal_dist <= 2 * U + U / 2 {
+        if key1.row() > key2.row() {
+            key2.finger().prefers_being_higher(key1.finger())
+        } else {
+            key1.finger().prefers_being_higher(key2.finger())
+        }
+    } else {
+        false
     }
 }
 
@@ -177,13 +195,34 @@ mod tests {
 
     #[test]
     fn scissors() {
-        assert!(is_scissors(Digit3, KeyV));
-        assert!(is_scissors(KeyE, KeyV));
-        assert!(!is_scissors(KeyD, KeyV));
-        assert!(!is_scissors(KeyC, KeyV));
-        assert!(!is_scissors(KeyV, KeyV));
-        assert!(!is_scissors(KeyF, KeyJ));
-        assert!(!is_scissors(Digit4, Space));
+        assert!(is_scissors(KeyQ, KeyS, ANSI));
+        assert!(is_scissors(KeyQ, KeyD, ANSI));
+        assert!(!is_scissors(KeyQ, KeyF, ANSI));
+        assert!(!is_scissors(KeyQ, KeyG, ANSI));
+        assert!(is_scissors(KeyQ, KeyX, ANSI));
+        assert!(is_scissors(KeyQ, KeyC, ANSI));
+        assert!(!is_scissors(KeyQ, KeyV, ANSI));
+        assert!(!is_scissors(KeyQ, KeyB, ANSI));
+
+        assert!(!is_scissors(KeyV, KeyA, ANSI));
+        assert!(!is_scissors(KeyV, KeyS, ANSI));
+        assert!(!is_scissors(KeyV, KeyD, ANSI));
+        assert!(!is_scissors(KeyV, KeyQ, ANSI));
+        assert!(!is_scissors(KeyV, KeyW, ANSI));
+        assert!(!is_scissors(KeyV, KeyE, ANSI));
+        assert!(!is_scissors(KeyV, KeyB, ANSI));
+        
+        // 2 rows of difference with no index is almost always scissors
+        assert!(is_scissors(KeyZ, KeyW, ANSI));
+        assert!(is_scissors(KeyX, KeyE, ANSI));
+        assert!(is_scissors(KeyC, KeyR, ANSI));
+        assert!(!is_scissors(KeyE, KeyV, ANSI));
+        assert!(is_scissors(KeyC, KeyW, ANSI));
+        assert!(is_scissors(KeyX, KeyQ, ANSI));
+        
+        assert!(!is_scissors(KeyS, KeyE, ANSI));
+        assert!(is_scissors(KeyS, KeyR, ANSI));
+        assert!(!is_scissors(KeyS, KeyT, ANSI));
     }
 
 }

@@ -57,6 +57,21 @@ impl Finger {
             }
         }
     }
+
+    fn prefered_height(&self) -> u32 {
+        use Finger::*;
+        match self {
+            Thumb => 0,
+            LeftPinky | RightPinky => 1,
+            LeftRing | RightRing => 3,
+            LeftMiddle | RightMiddle => 4,
+            LeftIndex | RightIndex => 2,
+        }
+    }
+
+    pub fn prefers_being_higher(&self, other_finger: Finger) -> bool {
+        self.prefered_height() > other_finger.prefered_height()
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash, strum::EnumIter)]
