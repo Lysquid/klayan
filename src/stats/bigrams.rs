@@ -1,6 +1,6 @@
 use strum::IntoEnumIterator;
 
-use crate::geometry::{self, Geometry, Row, U};
+use crate::geometry::{Geometry, Row, U};
 use crate::hands::{Finger, Hand, RollDirection};
 use crate::kalamine::{PhysicalKey, Symbol};
 use crate::keyseq::KeySymbol;

@@ -1,4 +1,6 @@
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::hash_map::Entry;
+#[cfg(test)]
+use std::collections::hash_map::HashMap;
 
 pub fn add_or_insert<K>(entry: Entry<'_, K, f32>, freq: f32) {
     entry.and_modify(|f| *f += freq).or_insert(freq);
