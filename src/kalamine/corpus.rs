@@ -27,7 +27,7 @@ impl<'de> serde::Deserialize<'de> for Corpus {
         Ok(Corpus {
             path: corpus.corpus,
             symbols: ngram_to_char(corpus.symbols),
-            digrams: ngram_to_char_array(corpus.digrams),
+            digrams: ngram_to_char_array(corpus.bigrams),
             trigrams: ngram_to_char_array(corpus.trigrams),
         })
     }
@@ -39,7 +39,8 @@ impl<'de> serde::Deserialize<'de> for Corpus {
 struct CorpusJSON {
     corpus: String,
     symbols: HashMap<Ngram<1>, f32>,
-    digrams: HashMap<Ngram<2>, f32>,
+    #[serde(alias = "digrams")]
+    bigrams: HashMap<Ngram<2>, f32>,
     trigrams: HashMap<Ngram<3>, f32>,
 }
 
